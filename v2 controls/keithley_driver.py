@@ -45,7 +45,22 @@ def set_topgate_voltage(voltage):
         if 'inst' in locals():
             inst.close()
     return current
-
+def get_topgate_current():
+    top_gate_address = "GPIB::24::INSTR"
+    # Create a resource manager
+    rm = pyvisa.ResourceManager()
+    
+    try:
+        # Open the connection to the instrument
+        inst = rm.open_resource(top_gate_address)
+        current = float(inst.query("MEAS:CURR?"))
+    except pyvisa.VisaIOError as e:
+        print(f"Error communicating with the instrument: {e}")
+    finally:
+        # Close the connection
+        if 'inst' in locals():
+            inst.close()
+    return current
 def get_topgate_voltage():
     top_gate_address = "GPIB::24::INSTR"
     # Create a resource manager
@@ -96,6 +111,24 @@ def set_backgate_voltage(voltage):
         # Set the desired voltage level
         inst.write("SOUR:VOLT:LEV {:.4f}".format(voltage))
         inst.write("OUTP ON")
+        current = float(inst.query("MEAS:CURR?"))
+    except pyvisa.VisaIOError as e:
+        print(f"Error communicating with the instrument: {e}")
+    finally:
+        # Close the connection
+        if 'inst' in locals():
+            inst.close()
+    return current
+
+def get_backgate_current():
+    back_gate_address = "GPIB::22::INSTR"
+    # Create a resource manager
+    rm = pyvisa.ResourceManager()
+    
+    try:
+        # Open the connection to the instrument
+        inst = rm.open_resource(back_gate_address)
+        
         current = float(inst.query("MEAS:CURR?"))
     except pyvisa.VisaIOError as e:
         print(f"Error communicating with the instrument: {e}")

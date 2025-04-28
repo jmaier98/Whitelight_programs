@@ -451,11 +451,9 @@ class ScanningMicroscopeGUI(tk.Tk):
         ESP.moveX(float(self.xpos_entry_var.get()))
         ESP.moveY(float(self.ypos_entry_var.get()))
     def set_TG(self):
-        if abs(float(self.TG_entry_var.get())) <= 7:
-            keithley.ramp_topgate_voltage(float(self.TG_entry_var.get()),.05)
+        self.stepInd("Top gate",float(self.TG_entry_var.get()))
     def set_BG(self):
-        if abs(float(self.BG_entry_var.get())) <= 8.5:
-            keithley.ramp_backgate_voltage(float(self.BG_entry_var.get()),.05)
+        self.stepInd("Back gate",float(self.BG_entry_var.get()))
     def browse_path(self):
         """Open a dialog to select a directory for saving data."""
         directory = filedialog.askdirectory()
@@ -666,21 +664,80 @@ class ScanningMicroscopeGUI(tk.Tk):
         if x_var == "Z pos":
             zstage.move_mm(x, relative = False)
         if x_var == "Top gate":
-            curr = keithley.ramp_topgate_voltage(x,.05)
-            if abs(curr) > self.currlimit:
-                keithley.ramp_topgate_voltage(0,.05)
-                keithley.ramp_backgate_voltage(0,.05)
-                self.scan_running = False
-                print(f"current limit exceeded when topgate set to {x}\nset both gates to 0V")
-                self.save_data
+            rate = .05
+            curr1 = 0
+            curr2 = 0
+            initial = keithley.get_topgate_voltage()
+            while x-initial > 0.0001:
+                if not self.scan_running:
+                    break
+                initial += min(x-initial,rate)
+                curr1 = keithley.set_topgate_voltage(initial)
+                curr2 = keithley.get_backgate_current()
+                    if (abs(curr1) > self.currlimit) or (abs(curr2) > self.currlimit):
+                        keithley.ramp_topgate_voltage(0,.05)
+                        keithley.ramp_backgate_voltage(0,.05)
+                        self.scan_running = False
+                        print(f"current limit exceeded when topgate set to {x}\nset both gates to 0V")
+                        x = 0
+                        initial = 0
+                        self.save_data
+                        break
+                time.sleep(0.005)
+            while x-initial < -0.0001:
+                if not self.scan_running:
+                    break
+                initial -= min(initial-x,rate)
+                curr1 = keithley.set_topgate_voltage(initial)
+                curr2 = keithley.get_backgate_current()
+                    if (abs(curr1) > self.currlimit) or (abs(curr2) > self.currlimit):
+                        keithley.ramp_topgate_voltage(0,.05)
+                        keithley.ramp_backgate_voltage(0,.05)
+                        self.scan_running = False
+                        print(f"current limit exceeded when topgate set to {x}\nset both gates to 0V")
+                        x = 0
+                        initial = 0
+                        self.save_data
+                        break
+                time.sleep(0.005)
+
         if x_var == "Back gate":
-            curr = keithley.ramp_backgate_voltage(x,.05)
-            if abs(curr) > self.currlimit:
-                keithley.ramp_topgate_voltage(0,.05)
-                keithley.ramp_backgate_voltage(0,.05)
-                self.scan_running = False
-                print(f"current limit exceeded when backgate set to {x}\nset both gates to 0V")
-                self.save_data
+            rate = .05
+            curr1 = 0
+            curr2 = 0
+            initial = keithley.get_backgate_voltage()
+            while x-initial > 0.0001:
+                if not self.scan_running:
+                    break
+                initial += min(x-initial,rate)
+                curr1 = keithley.set_backgate_voltage(initial)
+                curr2 = keithley.get_topgate_current()
+                    if (abs(curr1) > self.currlimit) or (abs(curr2) > self.currlimit):
+                        keithley.ramp_topgate_voltage(0,.05)
+                        keithley.ramp_backgate_voltage(0,.05)
+                        self.scan_running = False
+                        print(f"current limit exceeded when topgate set to {x}\nset both gates to 0V")
+                        x = 0
+                        initial = 0
+                        self.save_data
+                        break
+                time.sleep(0.005)
+            while x-initial < -0.0001:
+                if not self.scan_running:
+                    break
+                initial -= min(initial-x,rate)
+                curr1 = keithley.set_backgate_voltage(initial)
+                curr2 = keithley.get_topgate_current()
+                    if (abs(curr1) > self.currlimit) or (abs(curr2) > self.currlimit):
+                        keithley.ramp_topgate_voltage(0,.05)
+                        keithley.ramp_backgate_voltage(0,.05)
+                        self.scan_running = False
+                        print(f"current limit exceeded when topgate set to {x}\nset both gates to 0V")
+                        x = 0
+                        initial = 0
+                        self.save_data
+                        break
+                time.sleep(0.005)
         if x_var == "Gate line cut (set TG)":
             self.stepInd("Top gate",x)
             self.stepInd("Back gate",x_2)
@@ -751,6 +808,7 @@ class ScanningMicroscopeGUI(tk.Tk):
     def stop_scan(self):
         """Stops the scanning process."""
         self.scan_running = False
+        self.is_scanning = False
         print("Stopping scan...")
 
     def save_data(self):
