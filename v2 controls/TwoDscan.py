@@ -751,14 +751,14 @@ class ScanningMicroscopeGUI(tk.Tk):
         
         self.image_data_1 = self.data[0,:,:,3]
         self.image_plot_1.set_data(self.image_data_1)
-        self.image_plot_1.set_extent([x0[0]-(x0[1]-x0[0])/2, max(x0)+(x0[1]-x0[0])/2, min(y0)-(y0[1]-y0[0])/2,max(y0)+(y0[1]-y0[0])/2])
+        self.image_plot_1.set_extent([x0[0]-(x0[1]-x0[0])/2, x0[-1]+(x0[1]-x0[0])/2, y0[0]-(y0[1]-y0[0])/2,y0[-1]+(y0[1]-y0[0])/2])
         self.ax[0, 0].set_title(z_var)
         self.ax[0, 0].set_xlabel(x_var)
         self.ax[0, 0].set_ylabel(y_var)
         self.ax[0, 0].set_aspect('auto')
         self.image_data_2 = self.data[0,:,:,5]
         self.image_plot_2.set_data(self.image_data_2)
-        self.image_plot_2.set_extent([x0[0]-(x0[1]-x0[0])/2, max(x0)+(x0[1]-x0[0])/2, min(y0)-(y0[1]-y0[0])/2,max(y0)+(y0[1]-y0[0])/2])
+        self.image_plot_2.set_extent([x0[0]-(x0[1]-x0[0])/2, x0[-1]+(x0[1]-x0[0])/2, y0[0]-(y0[1]-y0[0])/2,y0[-1]+(y0[1]-y0[0])/2])
         self.ax[1, 1].set_title(z_var)
         self.ax[1, 1].set_xlabel(x_var)
         self.ax[1, 1].set_ylabel(y_var)
