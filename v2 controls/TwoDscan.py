@@ -33,7 +33,17 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.title("2D Scan Application")
         self.geometry("1800x1000")  # Adjust as needed
 
-        #self.esp = ESP301.ESP301()
+        # --- Create Notebook with two tabs ---
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(expand=True, fill='both')
+
+        # Tab 1: 2D Scan UI
+        self.scan_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.scan_tab, text="2D Scan")
+
+        # Tab 2: Active Stabilization
+        self.stab_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.stab_tab, text="Active Stabilization")
         
         # --- Scanning state ---
         self.scan_running = False
@@ -109,9 +119,21 @@ class ScanningMicroscopeGUI(tk.Tk):
         # Setup the 2x2 grid of plots
         self.fig, self.ax = plt.subplots(nrows=2, ncols=2)
         self.fig.tight_layout()
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.scan_tab)
         self.canvas.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.canvas.mpl_connect("button_press_event", self.on_click)
+
+        # --- Setup 2x2 plot canvas inside stabilization_tab ---
+        self.fig2, self.ax2 = plt.subplots(nrows=2, ncols=2)
+        self.fig2.tight_layout()
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.stab_tab)
+        self.canvas2.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+        # --- Control panel inside stab_tab ---
+        control_frame2 = ttk.Frame(self.stab_tab)
+        control_frame2.pack(side=tk.LEFT, fill=tk.X)
+        control_frame2.columnconfigure(0, weight=1)
+        control_frame2.columnconfigure(1, weight=1)
         
         # Initialize dummy images for each subplot
         self.image_data_1 = np.random.rand(20, 20) * 10e-6
@@ -141,12 +163,26 @@ class ScanningMicroscopeGUI(tk.Tk):
 
 
         # Control panel frame
-        control_frame = ttk.Frame(self)
+        control_frame = ttk.Frame(self.scan_tab)
         control_frame.pack(side=tk.LEFT, fill=tk.X)
 
         # Configure the control_frame for two columns
         control_frame.columnconfigure(0, weight=1)
         control_frame.columnconfigure(1, weight=1)
+
+        # Configure the control_frame2 for two columns
+        control_frame2.columnconfigure(0, weight=1)
+        control_frame2.columnconfigure(1, weight=1)
+
+        # ------------------------------------------------------------
+        # set up active stabilization controls
+        # ------------------------------------------------------------
+        ttk.Label(control_frame2, text="X inital pos:")\
+            .grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Y inital pos:")\
+            .grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        
 
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
