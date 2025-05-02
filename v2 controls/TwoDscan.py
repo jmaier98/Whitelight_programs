@@ -113,6 +113,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.x_fit_errors = []
         self.y_fit_errors = []
         self.align_before_scans = tk.BooleanVar(value = False)
+        self.align_every_n_xscans = tk.BooleanVar(value = False)
+        self.x_scan_alignment_n = tk.IntVar(value = 1)
+        self.move_after_align = tk.BooleanVar(value = False)
+        self.x_target = tk.DoubleVar(value=0.0)
+        self.y_target = tk.DoubleVar(value=0.0)
 
         # --- Initialize data---
         self.data = np.zeros((1,1,1,6))
@@ -279,8 +284,24 @@ class ScanningMicroscopeGUI(tk.Tk):
         align_button.grid(row=12, column=0, padx=5, pady=10, sticky="ew")
 
         align_scan_check = ttk.Checkbutton(control_frame2, text='Align before each scan', variable = self.align_before_scans, onvalue=True, offvalue=False, command=lambda: print("Now:", self.align_before_scans.get()))
-        align_scan_check.grid(row=13, column=0, padx=5, pady=10, sticky="ew")
+        align_scan_check.grid(row=13, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
+        align_xscan_check = ttk.Checkbutton(control_frame2, text='Align every N x_scans', variable = self.align_every_n_xscans, onvalue=True, offvalue=False, command=lambda: print("Now:", self.align_every_n_xscans.get()))
+        align_xscan_check.grid(row=14, column=0, padx=5, pady=5, sticky="ew")
+
+        number_alignemnt_xscans_entry = ttk.Entry(control_frame2, textvariable = self.x_scan_alignment_n)
+        number_alignemnt_xscans_entry.grid(row=14, column=1, padx=5, pady=5, sticky="ew")
+
+        move_after_align_check = ttk.Checkbutton(control_frame2, text='Move after align to target pos', variable = self.move_after_align, onvalue=True, offvalue=False, command=lambda: print("Now:", self.move_after_align.get()))
+        move_after_align_check.grid(row=15, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+        
+        ttk.Label(control_frame2, text="x target").grid(row=16, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="y target").grid(row=16, column=1, padx=5, pady=5, sticky="ew")
+
+        x_target_entry = ttk.Entry(control_frame2, textvariable = self.x_target)
+        x_target_entry.grid(row=17, column=0, padx=5, pady=5, sticky="ew")
+        y_target_entry = ttk.Entry(control_frame2, textvariable = self.y_target)
+        y_target_entry.grid(row=17, column=1, padx=5, pady=5, sticky="ew")
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
         # ------------------------------------------------------------
@@ -684,8 +705,15 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.x_fit_errors.append(xrmse)
         self.y_fit_errors.append(yrmse)
         self.after(0, self.update_alignment_trackers)
+        if self.move_after_align.get() == True:
+            print(f"moving back to x={self.x_target.get()}, y={self.y_target.get()}")
+            ESP.moveX(self.x_target.get()+self.x_offset)
+            ESP.moveY(self.y_target.get()+self.y_offset)
+        
 
     def update_alignment_trackers(self):
+        self.number_of_alignment_scans.set(self.number_of_alignment_scans.get()+1)
+        self.total_drift.set(np.sqrt(self.x_offset**2 + self.y_offset**2))
         self.ax2[1,0].cla()
         self.ax2[1,0].plot(self.x_fit_errors, label = "x fit error")
         self.ax2[1,0].plot(self.y_fit_errors, label = "y fit error")
@@ -919,6 +947,8 @@ class ScanningMicroscopeGUI(tk.Tk):
                 self._run_align()
             for row in range(len(X)):
                 self.row = row
+                if row % self.x_scan_alignment_n.get() == 0 and self.align_every_n_xscans.get() == True:
+                    self._run_align()
                 if not self.scan_running:
                     break
                 if y_var == "Gate line cut (set TG)":
