@@ -23,6 +23,15 @@ class ESP301:
         time.sleep(0.1)  # Short delay for processing
         response = self.ser.readline().decode().strip()  # Read response
         return response
+    
+    def quick_command(self, command):
+        self.ser.write(f"{command}\r".encode())
+        time.sleep(0.01)
+        
+    def quick_read(self):
+        time.sleep(0.02)
+        response = self.ser.readline().decode().strip()
+        return response
 
     def enable_motors(self):
         """

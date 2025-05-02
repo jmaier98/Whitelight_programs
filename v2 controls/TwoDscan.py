@@ -14,6 +14,7 @@ import Photon_counter_driver as PC
 import z_stage_driver as Zstage
 import matplotlib.pyplot as plt
 import keithley_driver as keithley
+import Electrode_fitter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 zstage = Zstage.Controller(which_port='COM8')
@@ -92,6 +93,27 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.BGS_entry_var = tk.StringVar(value="0")
         self.BGE_entry_var = tk.StringVar(value="0")
 
+        # --- Stabilization routine vars ---
+        self.x_init_pos_var = tk.StringVar(value="0")
+        self.y_init_pos_var = tk.StringVar(value="0")
+        self.dir_x_cut = tk.StringVar(value="right")
+        self.dir_y_cut = tk.StringVar(value="down")
+        self.x_dist_var = tk.StringVar(value="10")
+        self.y_dist_var = tk.StringVar(value="10")
+        self.x_feature_pos = tk.DoubleVar(value=0.0)
+        self.y_feature_pos = tk.DoubleVar(value=0.0)
+        self.number_of_alignment_scans = tk.IntVar(value=0)
+        self.total_drift = tk.DoubleVar(value=0.0)
+        self.x_origin = 0
+        self.y_origin = 0
+        self.x_offset = 0
+        self.y_offset = 0
+        self.x_displacements = []
+        self.y_displacements = []
+        self.x_fit_errors = []
+        self.y_fit_errors = []
+        self.align_before_scans = tk.BooleanVar(value = False)
+
         # --- Initialize data---
         self.data = np.zeros((1,1,1,6))
         self.avg_data = np.zeros((1,1,6))
@@ -130,8 +152,10 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.canvas2.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
         # --- Control panel inside stab_tab ---
-        control_frame2 = ttk.Frame(self.stab_tab)
-        control_frame2.pack(side=tk.LEFT, fill=tk.X)
+        control_frame3 = ttk.Frame(self.stab_tab, width=400)
+        control_frame3.pack(side=tk.LEFT)
+        control_frame2 = ttk.LabelFrame(control_frame3, text="alignment scan controls")
+        control_frame2.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         control_frame2.columnconfigure(0, weight=1)
         control_frame2.columnconfigure(1, weight=1)
         
@@ -160,6 +184,31 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.ax[1, 1].set_ylabel("Y Axis")
         self.fig.colorbar(self.image_plot_2, ax=self.ax[1, 1], orientation='vertical')
 
+        # Initialize dummy images for each subplot
+        
+
+        self.alignment_x_cut = self.ax2[0, 0].plot(self.image_data_1[:,0])
+        self.ax2[0, 0].set_title("X linecut")
+        self.ax2[0, 0].set_xlabel("X pos")
+        self.ax2[0, 0].set_ylabel("R lockin")
+
+        self.alignment_y_cut = self.ax2[0, 1].plot([], [], 'b-')
+        self.ax2[0, 1].set_title("Y linecut")
+        self.ax2[0, 1].set_xlabel("Y pos")
+        self.ax2[0, 1].set_ylabel("R lockin")
+
+        self.error_chart_x = self.ax2[1, 0].plot([], [], 'b-', label = 'x fit error')
+        self.error_chart_y = self.ax2[1, 0].plot([], [], 'r-', label = 'y fit error')
+        self.ax2[1, 0].set_title("Error of fits")
+        self.ax2[1, 0].set_xlabel("Scan Number")
+        self.ax2[1, 0].set_ylabel("Error")
+
+        self.drift_chart = self.ax2[1, 1].plot([], [], 'b-')
+        self.ax2[1, 1].set_title("Displacement from Origin")
+        self.ax2[1, 1].set_xlabel("X Axis")
+        self.ax2[1, 1].set_ylabel("Y Axis")
+        
+
 
 
         # Control panel frame
@@ -170,9 +219,6 @@ class ScanningMicroscopeGUI(tk.Tk):
         control_frame.columnconfigure(0, weight=1)
         control_frame.columnconfigure(1, weight=1)
 
-        # Configure the control_frame2 for two columns
-        control_frame2.columnconfigure(0, weight=1)
-        control_frame2.columnconfigure(1, weight=1)
 
         # ------------------------------------------------------------
         # set up active stabilization controls
@@ -182,7 +228,58 @@ class ScanningMicroscopeGUI(tk.Tk):
         ttk.Label(control_frame2, text="Y inital pos:")\
             .grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
+        x_pos_entry = ttk.Entry(control_frame2, textvariable = self.x_init_pos_var)
+        x_pos_entry.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+        y_pos_entry = ttk.Entry(control_frame2, textvariable = self.y_init_pos_var)
+        y_pos_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+
+        # --- Row 2–3: Direction Radiobuttons ---
         
+
+        ttk.Label(control_frame2, text="Direction:").grid(row=2, column=0, padx=5, pady=2, sticky="w")
+
+        ttk.Radiobutton(control_frame2, text="← left", variable=self.dir_x_cut, value="left").grid(row=3, column=0, sticky="w")
+        ttk.Radiobutton(control_frame2, text="→ right", variable=self.dir_x_cut, value="right").grid(row=4, column=0, sticky="w")
+
+        ttk.Radiobutton(control_frame2, text="↑ up", variable=self.dir_y_cut, value="up").grid(row=3, column=1, sticky="w")
+        ttk.Radiobutton(control_frame2, text="↓ down", variable=self.dir_y_cut, value="down").grid(row=4, column=1, sticky="w")
+
+        # --- Row 5: Distances ---
+        ttk.Label(control_frame2, text="X dist:").grid(row=5, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Y dist:").grid(row=5, column=1, padx=5, pady=5, sticky="ew")
+
+        x_dist_entry = ttk.Entry(control_frame2, textvariable = self.x_dist_var)
+        x_dist_entry.grid(row=6, column=0, padx=5, pady=5, sticky="ew")
+        y_dist_entry = ttk.Entry(control_frame2, textvariable = self.y_dist_var)
+        y_dist_entry.grid(row=6, column=1, padx=5, pady=5, sticky="ew")
+
+        # --- Row 7: Do First Scan Button ---
+        first_scan_button = ttk.Button(control_frame2, text="Reset Origin", command = self.reset_origin)
+        first_scan_button.grid(row=7, column=0, padx=5, pady=10, sticky="ew")
+        reset_offsets_button = ttk.Button(control_frame2, text="Reset Offsets", command = self.reset_offsets)
+        reset_offsets_button.grid(row=7, column=1, padx=5, pady=10, sticky="ew")
+
+        # --- Row 8: X loc, Y loc Buttons ---
+        ttk.Label(control_frame2, text="x feature loc:").grid(row=8, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="y feature loc:").grid(row=8, column=1, padx=5, pady=5, sticky="ew")
+        x_loc_entry = ttk.Entry(control_frame2, textvariable = self.x_feature_pos, state = "readonly")
+        x_loc_entry.grid(row=9, column=0, padx=5, pady=5, sticky="ew")
+        y_loc_entry = ttk.Entry(control_frame2, textvariable = self.y_feature_pos, state = "readonly")
+        y_loc_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
+
+        # --- Row 9: Number of Scans / Total Drift ---
+        ttk.Label(control_frame2, text="Number of scans:").grid(row=10, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Total drift:").grid(row=10, column=1, padx=5, pady=5, sticky="ew")
+        number_alignemnt_scans_entry = ttk.Entry(control_frame2, textvariable = self.number_of_alignment_scans, state = "readonly")
+        number_alignemnt_scans_entry.grid(row=11, column=0, padx=5, pady=5, sticky="ew")
+        drift_entry = ttk.Entry(control_frame2, textvariable = self.total_drift, state = "readonly")
+        drift_entry.grid(row=11, column=1, padx=5, pady=5, sticky="ew")
+
+        align_button = ttk.Button(control_frame2, text="ALIGN!!", command = self.align)
+        align_button.grid(row=12, column=0, padx=5, pady=10, sticky="ew")
+
+        align_scan_check = ttk.Checkbutton(control_frame2, text='Align before each scan', variable = self.align_before_scans, onvalue=True, offvalue=False, command=lambda: print("Now:", self.align_before_scans.get()))
+        align_scan_check.grid(row=13, column=0, padx=5, pady=10, sticky="ew")
 
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
@@ -403,6 +500,238 @@ class ScanningMicroscopeGUI(tk.Tk):
         
         self.scan_thread = None
         self.is_scanning = False
+    def reset_offsets(self):
+        self.x_offset = 0
+        self.y_offset = 0
+    def reset_origin(self):
+        threading.Thread(target=self._run_reset_origin, daemon=True).start()
+    def _run_reset_origin(self):
+        self.x_displacements = []
+        self.y_displacements = []
+        self.x_fit_errors = []
+        self.y_fit_errors = []
+        print("moving to initial positions")
+        x0 = float(self.x_init_pos_var.get())
+        y0 = float(self.y_init_pos_var.get())
+        ESP.moveX(x0+self.x_offset)
+        ESP.moveY(y0+self.y_offset)
+        if self.dir_x_cut.get() == "right":
+            x1 = x0 + float(self.x_dist_var.get())
+        else:
+            x1 = x0 - float(self.x_dist_var.get())
+        if self.dir_y_cut.get() == "up":
+            y1 = y0 + float(self.x_dist_var.get())
+        else:
+            y1 = y0 - float(self.x_dist_var.get())
+        x1 = (-1*(x1+self.x_offset))/175 + 6.1
+        y1 = (y1+self.y_offset)/240 + 6.1
+        # --- X SCAN ---
+        yup = lockin.readx1()
+        print("moving x")
+        ESP.quick_command("1VA0.005")
+        ESP.quick_command(f"1PA{x1}")
+        X_vals, R_vals_x = [], []
+        i = 0
+        while i < 1000:
+            ESP.quick_command("1TP?")
+            pos = ESP.quick_read()
+            try:
+                X_vals.append(((float(pos) - 6.1) * -175)-self.x_offset)
+                R_vals_x.append(lockin.readx1())
+                self.after(0, self.update_x_alignment_cut, X_vals, R_vals_x)
+                if abs(float(pos) - x1) < 1e-4:
+                    break
+            except ValueError:
+                print("error parsing X position")
+            time.sleep(0.01)
+            i += 1
+
+        ESP.quick_command("1VA0.2")
+        print("running fit for X")
+        x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid(
+            X_vals, R_vals_x, 5)
+        print(x_params)
+        self.x_feature_pos.set(x_center)
+        self.x_origin = x_center
+        self.after(0, self.update_x_fit, X_vals, R_vals_x, x_fit)
+
+        # --- Y SCAN ---
+        ESP.moveX(x0)
+        yup = lockin.readx1()
+        print("moving y")
+        ESP.quick_command("2VA0.0033")
+        ESP.quick_command(f"2PA{y1}")
+        Y_vals, R_vals_y = [], []
+        i = 0
+        while i < 1000:
+            ESP.quick_command("2TP?")
+            pos = ESP.quick_read()
+            try:
+                Y_vals.append(((float(pos) - 6.1) * 240)-self.y_offset)
+                R_vals_y.append(lockin.readx1())
+                self.after(0, self.update_y_alignment_cut, Y_vals, R_vals_y)
+                if abs(float(pos) - y1) < 1e-4:
+                    break
+            except ValueError:
+                print("error parsing Y position")
+            time.sleep(0.01)
+            i += 1
+
+        ESP.quick_command("2VA0.2")
+        print("running fit for Y")
+        y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid(
+            Y_vals, R_vals_y, 5)
+        print(y_params)
+        self.y_feature_pos.set(y_center)
+        self.y_origin = y_center
+        self.after(0, self.update_y_fit, Y_vals, R_vals_y, y_fit)
+        
+    def align(self):
+        threading.Thread(target=self._run_align, daemon=True).start()
+    def _run_align(self):
+        print("moving to initial positions")
+        x0 = float(self.x_init_pos_var.get())
+        y0 = float(self.y_init_pos_var.get())
+        ESP.moveX(x0+self.x_offset)
+        ESP.moveY(y0+self.y_offset)
+        if self.dir_x_cut.get() == "right":
+            x1 = x0 + float(self.x_dist_var.get())
+        else:
+            x1 = x0 - float(self.x_dist_var.get())
+        if self.dir_y_cut.get() == "up":
+            y1 = y0 + float(self.x_dist_var.get())
+        else:
+            y1 = y0 - float(self.x_dist_var.get())
+        x1 = (-1*(x1+self.x_offset))/175 + 6.1
+        y1 = (y1+self.y_offset)/240 + 6.1
+        # --- X SCAN ---
+        yup = lockin.readx1()
+        print("moving x")
+        ESP.quick_command("1VA0.005")
+        ESP.quick_command(f"1PA{x1}")
+        X_vals, R_vals_x = [], []
+        i = 0
+        while i < 1000:
+            ESP.quick_command("1TP?")
+            pos = ESP.quick_read()
+            try:
+                X_vals.append(((float(pos) - 6.1) * -175)-self.x_offset)
+                R_vals_x.append(lockin.readx1())
+                self.after(0, self.update_x_alignment_cut, X_vals, R_vals_x)
+                if abs(float(pos) - x1) < 1e-4:
+                    break
+            except ValueError:
+                print("error parsing X position")
+            time.sleep(0.01)
+            i += 1
+
+        ESP.quick_command("1VA0.2")
+        print("running fit for X")
+        try:
+            x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid(X_vals, R_vals_x, 5)
+        except Exception as e:
+            print(f"Unexpected error in fit_double_sigmoid: {e}")
+            x_params = None
+        if x_params is not None:
+            self.x_feature_pos.set(x_center)
+            self.x_offset = self.x_offset - self.x_origin + x_center
+            print(f'new x offset {self.x_offset}')
+            self.after(0, self.update_x_fit, X_vals, R_vals_x, x_fit)
+        else:
+            print(f"Fit failed for X_vals={X_vals}, R_vals={R_vals_x}")
+            xrmse = 0
+
+        # --- Y SCAN ---
+        ESP.moveX(x0)
+        yup = lockin.readx1()
+        print("moving y")
+        ESP.quick_command("2VA0.0033")
+        ESP.quick_command(f"2PA{y1}")
+        Y_vals, R_vals_y = [], []
+        i = 0
+        while i < 1000:
+            ESP.quick_command("2TP?")
+            pos = ESP.quick_read()
+            try:
+                Y_vals.append(((float(pos) - 6.1) * 240)-self.y_offset)
+                R_vals_y.append(lockin.readx1())
+                self.after(0, self.update_y_alignment_cut, Y_vals, R_vals_y)
+                if abs(float(pos) - y1) < 1e-4:
+                    break
+            except ValueError:
+                print("error parsing Y position")
+            time.sleep(0.01)
+            i += 1
+
+        ESP.quick_command("2VA0.2")
+        print("running fit for Y")
+        try:
+            y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid(
+                Y_vals, R_vals_y, 5)
+        except Exception as e:
+            print(f"Unexpected error in fit_double_sigmoid: {e}")
+            y_params = None
+        if y_params is not None:
+            self.y_feature_pos.set(y_center)
+            self.y_offset = self.y_offset - self.y_origin + y_center
+            print(f'new y offset {self.y_offset}')
+            self.after(0, self.update_y_fit, Y_vals, R_vals_y, y_fit)
+        else:
+            print(f"Fit failed for Y_vals={Y_vals}, R_vals={R_vals_y}")
+            yrmse = 0
+        self.x_displacements.append(self.x_offset)
+        self.y_displacements.append(self.y_offset)
+        self.x_fit_errors.append(xrmse)
+        self.y_fit_errors.append(yrmse)
+        self.after(0, self.update_alignment_trackers)
+
+    def update_alignment_trackers(self):
+        self.ax2[1,0].cla()
+        self.ax2[1,0].plot(self.x_fit_errors, label = "x fit error")
+        self.ax2[1,0].plot(self.y_fit_errors, label = "y fit error")
+        self.ax2[1,0].set_title("Fitting errors")
+        self.ax2[1,0].set_xlabel("Alignment scan number")
+        self.ax2[1,0].set_ylabel("RMSE")
+        self.ax2[1,1].cla()
+        self.ax2[1,1].plot(self.x_displacements, self.y_displacements)
+        self.ax2[1,1].set_title("Displacement from origin (um)")
+        self.ax2[1,1].set_xlabel("X displacement")
+        self.ax2[1,1].set_ylabel("Y displacement")
+        self.canvas2.draw_idle()
+    def update_x_alignment_cut(self, X_vals, R_vals_x):
+        self.ax2[0,0].cla()
+        self.ax2[0,0].plot(X_vals, R_vals_x)
+        self.ax2[0,0].set_title("X linecut for alignment")
+        self.ax2[0,0].set_xlabel("x position")
+        self.ax2[0,0].set_ylabel("R lockin")
+        self.canvas2.draw_idle()
+
+    def update_x_fit(self, X_vals, R_vals_x, x_fit):
+        self.ax2[0,0].cla()
+        self.ax2[0,0].plot(X_vals, R_vals_x)
+        self.ax2[0,0].plot(X_vals, x_fit)
+        self.ax2[0,0].set_title("X linecut for alignment")
+        self.ax2[0,0].set_xlabel("x position")
+        self.ax2[0,0].set_ylabel("R lockin")
+        self.canvas2.draw_idle()
+
+    def update_y_alignment_cut(self, Y_vals, R_vals_y):
+        self.ax2[0,1].cla()
+        self.ax2[0,1].plot(Y_vals, R_vals_y)
+        self.ax2[0,1].set_title("Y linecut for alignment")
+        self.ax2[0,1].set_xlabel("y position")
+        self.ax2[0,1].set_ylabel("R lockin (Y)")
+        self.canvas2.draw_idle()
+
+    def update_y_fit(self, Y_vals, R_vals_y, y_fit):
+        self.ax2[0,1].cla()
+        self.ax2[0,1].plot(Y_vals, R_vals_y)
+        self.ax2[0,1].plot(Y_vals, y_fit)
+        self.ax2[0,1].set_title("Y linecut for alignment")
+        self.ax2[0,1].set_xlabel("y position")
+        self.ax2[0,1].set_ylabel("R lockin (Y)")
+        self.canvas2.draw_idle()
+
     def on_click(self, event):
         """
         Callback for mouse clicks in the figure.
@@ -484,8 +813,8 @@ class ScanningMicroscopeGUI(tk.Tk):
     def set_zpos(self):
         zstage.move_mm(float(self.zpos_entry_var.get()), relative = False)
     def set_xypos(self):
-        ESP.moveX(float(self.xpos_entry_var.get()))
-        ESP.moveY(float(self.ypos_entry_var.get()))
+        ESP.moveX(float(self.xpos_entry_var.get())+self.x_offset)
+        ESP.moveY(float(self.ypos_entry_var.get())+self.y_offset)
     def set_TG(self):
         self.scan_running = True
         self.stepInd("Top gate",float(self.TG_entry_var.get()))
@@ -586,6 +915,8 @@ class ScanningMicroscopeGUI(tk.Tk):
             self.data[scanNum,:,:,1] = Y
             self.data[scanNum,:,:,2] = X
             #self.stepInd("Delay time (ps)",scanNum*10-50)
+            if self.align_before_scans.get() == True:
+                self._run_align()
             for row in range(len(X)):
                 self.row = row
                 if not self.scan_running:
@@ -692,15 +1023,15 @@ class ScanningMicroscopeGUI(tk.Tk):
                 time.sleep(2)
                 moved = ESP.moveZ(x)
         if x_var == "X pos":
-            moved = ESP.moveX(x)
+            moved = ESP.moveX(x+self.x_offset)
             while moved != True:
                 time.sleep(2)
-                moved = ESP.moveX(x)
+                moved = ESP.moveX(x+self.x_offset)
         if x_var == "Y pos":
-            moved = ESP.moveY(x)
+            moved = ESP.moveY(x+self.y_offset)
             while moved != True:
                 time.sleep(2)
-                moved = ESP.moveX(x)
+                moved = ESP.moveX(x+self.y_offset)
         if x_var == "Z pos":
             zstage.move_mm(x, relative = False)
         if x_var == "Top gate":
