@@ -120,6 +120,10 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.x_target = tk.DoubleVar(value=0.0)
         self.y_target = tk.DoubleVar(value=0.0)
 
+        # --- General Settings ---
+        self.acquisition_time = tk.DoubleVar(value = 1.0)
+        self.discriminator = tk.DoubleVar(value = -0.005)
+
         # --- Initialize data---
         self.data = np.zeros((1,1,1,6))
         self.avg_data = np.zeros((1,1,6))
@@ -303,6 +307,17 @@ class ScanningMicroscopeGUI(tk.Tk):
         x_target_entry.grid(row=17, column=0, padx=5, pady=5, sticky="ew")
         y_target_entry = ttk.Entry(control_frame2, textvariable = self.y_target)
         y_target_entry.grid(row=17, column=1, padx=5, pady=5, sticky="ew")
+
+        ttk.Label(control_frame2, text="ACQ time").grid(row=18, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Discriminator").grid(row=18, column=1, padx=5, pady=5, sticky="ew")
+
+        acq_entry = ttk.Entry(control_frame2, textvariable = self.acquisition_time)
+        acq_entry.grid(row=19, column=0, padx=5, pady=5, sticky="ew")
+        disc_entry = ttk.Entry(control_frame2, textvariable = self.discriminator)
+        disc_entry.grid(row=19, column=1, padx=5, pady=5, sticky="ew")
+
+        set_PC_button = ttk.Button(control_frame2, text="update PC settings", command = self.set_pc_settings)
+        set_PC_button.grid(row=20, column=0, padx=5, pady=10, sticky="ew")
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
         # ------------------------------------------------------------
@@ -522,6 +537,8 @@ class ScanningMicroscopeGUI(tk.Tk):
         
         self.scan_thread = None
         self.is_scanning = False
+    def set_pc_settings(self):
+        PC.set_t_and_disc(self.acquisition_time.get(),self.discriminator.get())
     def reset_offsets(self):
         self.x_offset = 0
         self.y_offset = 0

@@ -90,6 +90,19 @@ class SR400:
         # Wait for the count period to finish.
         time.sleep(self.acquisition_time + 0.1)
         return self.read_counts()
+    def set_t_and_disc(self,t,disc):
+        self.inst.write(f"GM 0,0")
+        time.sleep(0.05)
+        self.set_discriminator(disc, channel=0)
+        time.sleep(0.05)
+
+        # 2) Update the dwell time
+        self.acquisition_time = t
+        # SR400 expects CP 2,<N> where N = 1e7 × acquisition_time
+        nacq = int(1e7 * acquisition_time)
+        self.inst.write(f"CP 2,{nacq}")
+        time.sleep(0.05)
+        print("set acquisition time and disc")
 
 
 # Example usage:
