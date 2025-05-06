@@ -66,6 +66,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         # --- Other scanning parameters ---
         self.averages_var   = tk.StringVar(value="1")
         self.wait_time_var  = tk.StringVar(value="0.5")
+        self.time_zero_pos = tk.DoubleVar(value = 9.575)
 
         # --- Metadata ---
         self.device_var           = tk.StringVar(value="Device1")
@@ -809,7 +810,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         spec.set_nm(float(self.wavelength_entry_var.get()))
     def set_delay(self):
         x = float(self.delay_entry_var.get())
-        target_pos = -1.45 + x*-.15
+        target_pos = self.time_zero_pos.get() + x*-.15
         if target_pos < -105:
             target_pos = -105
         if target_pos > 105:
@@ -820,7 +821,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             moved = ESP.moveZ(target_pos)
     def set_YD(self):
         x = float(self.YD_entry_var.get())
-        target_pos = -1.45 + x*.15
+        target_pos = self.time_zero_pos.get() + x*.15
         if target_pos < -105:
             target_pos = -105
         if target_pos > 105:
@@ -1007,14 +1008,14 @@ class ScanningMicroscopeGUI(tk.Tk):
                 time.sleep(2)
                 moved = ESP.moveZ(x)
         if x_var == "Delay time (ps)":
-            target_pos = -1.45 + x*-.15
+            target_pos = self.time_zero_pos.get() + x*-.15
             if target_pos < -105:
                 target_pos = -105
             if target_pos > 105:
                 target_pos = 105
             ESP.moveZfast(target_pos)
         if x_var == "Delay time (ps)_yaxis":
-            target_pos = -1.45 + x*-.15
+            target_pos = self.time_zero_pos.get() + x*-.15
             if target_pos < -105:
                 target_pos = -105
             if target_pos > 105:
@@ -1024,7 +1025,7 @@ class ScanningMicroscopeGUI(tk.Tk):
                 time.sleep(2)
                 moved = ESP.moveZbut2(target_pos)
         if x_var == "Reverse Delay time (ps)_yaxis":
-            target_pos = -1.45 + x*.15
+            target_pos = self.time_zero_pos.get() + x*.15
             if target_pos < -105:
                 target_pos = -105
             if target_pos > 105:
@@ -1034,7 +1035,7 @@ class ScanningMicroscopeGUI(tk.Tk):
                 time.sleep(2)
                 moved = ESP.moveZbut2(target_pos)
         if x_var == "Reverse delay time (ps)":
-            target_pos = -1.45 + x*-.15
+            target_pos = self.time_zero_pos.get() + x*-.15
             if target_pos < -105:
                 target_pos = -105
             if target_pos > 105:
