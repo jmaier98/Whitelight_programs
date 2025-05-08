@@ -99,7 +99,7 @@ class SR400:
         # 2) Update the dwell time
         self.acquisition_time = t
         # SR400 expects CP 2,<N> where N = 1e7 × acquisition_time
-        nacq = int(1e7 * acquisition_time)
+        nacq = int(1e7 * t)
         self.inst.write(f"CP 2,{nacq}")
         time.sleep(0.05)
         print("set acquisition time and disc")

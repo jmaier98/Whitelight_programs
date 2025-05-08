@@ -538,7 +538,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.scan_thread = None
         self.is_scanning = False
     def set_pc_settings(self):
-        PC.set_t_and_disc(self.acquisition_time.get(),self.discriminator.get())
+        sr400.set_t_and_disc(self.acquisition_time.get(),self.discriminator.get())
     def reset_offsets(self):
         self.x_offset = 0
         self.y_offset = 0
