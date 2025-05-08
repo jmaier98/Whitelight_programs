@@ -113,6 +113,8 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.y_displacements = []
         self.x_fit_errors = []
         self.y_fit_errors = []
+        self.x_fixed_d = 5
+        self.y_fixed_d = 5
         self.align_before_scans = tk.BooleanVar(value = False)
         self.align_every_n_xscans = tk.BooleanVar(value = False)
         self.x_scan_alignment_n = tk.IntVar(value = 1)
@@ -592,6 +594,8 @@ class ScanningMicroscopeGUI(tk.Tk):
         print(x_params)
         self.x_feature_pos.set(x_center)
         self.x_origin = x_center
+        self.x_fixed_d = popt_x[4]
+        print("set x fixed d to {self.x_fixed_d}")
         self.after(0, self.update_x_fit, X_vals, R_vals_x, x_fit)
 
         # --- Y SCAN ---
@@ -623,6 +627,8 @@ class ScanningMicroscopeGUI(tk.Tk):
         print(y_params)
         self.y_feature_pos.set(y_center)
         self.y_origin = y_center
+        self.y_fixed_d = popt_y[4]
+        print("set y fixed d to {self.y_fixed_d}")
         self.after(0, self.update_y_fit, Y_vals, R_vals_y, y_fit)
         
     def align(self):
@@ -667,7 +673,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         ESP.quick_command("1VA0.2")
         print("running fit for X")
         try:
-            x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid(X_vals, R_vals_x, 5)
+            x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid_fixed_d(X_vals, R_vals_x, self.x_fixed_d)
         except Exception as e:
             print(f"Unexpected error in fit_double_sigmoid: {e}")
             x_params = None
@@ -705,8 +711,8 @@ class ScanningMicroscopeGUI(tk.Tk):
         ESP.quick_command("2VA0.2")
         print("running fit for Y")
         try:
-            y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid(
-                Y_vals, R_vals_y, 5)
+            y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid_fixed_d(
+                Y_vals, R_vals_y, self.y_fixed_d)
         except Exception as e:
             print(f"Unexpected error in fit_double_sigmoid: {e}")
             y_params = None
