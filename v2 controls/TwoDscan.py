@@ -8,7 +8,7 @@ import threading
 import time
 import datetime
 import ESP301
-import lockin_driver_v2 as lockin
+import lockin_driver_v3 as lockin
 import SP2500
 import Photon_counter_driver as PC
 import z_stage_driver as Zstage
