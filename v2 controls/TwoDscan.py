@@ -123,6 +123,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.x_target = tk.DoubleVar(value=0.0)
         self.y_target = tk.DoubleVar(value=0.0)
         self.custom = tk.BooleanVar(value = False)
+        self.single_sigmoid = tk.BooleanVar(value = False)
 
         # --- General Settings ---
         self.acquisition_time = tk.DoubleVar(value = 1.0)
@@ -312,19 +313,22 @@ class ScanningMicroscopeGUI(tk.Tk):
         y_target_entry = ttk.Entry(control_frame2, textvariable = self.y_target)
         y_target_entry.grid(row=17, column=1, padx=5, pady=5, sticky="ew")
 
-        ttk.Label(control_frame2, text="ACQ time").grid(row=18, column=0, padx=5, pady=5, sticky="ew")
-        ttk.Label(control_frame2, text="Discriminator").grid(row=18, column=1, padx=5, pady=5, sticky="ew")
+        single_sigmoid_check = ttk.Checkbutton(control_frame2, text='Fit sigmoid instead of hat', variable = self.single_sigmoid, onvalue=True, offvalue=False, command=lambda: print("Now:", self.single_sigmoid.get()))
+        single_sigmoid_check.grid(row=18, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+
+        ttk.Label(control_frame2, text="ACQ time").grid(row=19, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Discriminator").grid(row=19, column=1, padx=5, pady=5, sticky="ew")
 
         acq_entry = ttk.Entry(control_frame2, textvariable = self.acquisition_time)
-        acq_entry.grid(row=19, column=0, padx=5, pady=5, sticky="ew")
+        acq_entry.grid(row=20, column=0, padx=5, pady=5, sticky="ew")
         disc_entry = ttk.Entry(control_frame2, textvariable = self.discriminator)
-        disc_entry.grid(row=19, column=1, padx=5, pady=5, sticky="ew")
+        disc_entry.grid(row=20, column=1, padx=5, pady=5, sticky="ew")
 
         set_PC_button = ttk.Button(control_frame2, text="update PC settings", command = self.set_pc_settings)
-        set_PC_button.grid(row=20, column=0, padx=5, pady=10, sticky="ew")
+        set_PC_button.grid(row=21, column=0, padx=5, pady=10, sticky="ew")
         
         custom_check = ttk.Checkbutton(control_frame2, text='use custom tg cut values', variable = self.custom, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom.get()))
-        custom_check.grid(row=21, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+        custom_check.grid(row=22, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
         # ------------------------------------------------------------
@@ -594,13 +598,20 @@ class ScanningMicroscopeGUI(tk.Tk):
 
         ESP.quick_command("1VA0.2")
         print("running fit for X")
-        x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid(
-            X_vals, R_vals_x, 5)
-        print(x_params)
-        self.x_feature_pos.set(x_center)
-        self.x_origin = x_center
-        self.x_fixed_d = popt_x[4]
-        print("set x fixed d to {self.x_fixed_d}")
+        if self.single_sigmoid.get() == False:
+            x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid(
+                X_vals, R_vals_x, 5)
+            print(x_params)
+            self.x_feature_pos.set(x_center)
+            self.x_origin = x_center
+            self.x_fixed_d = popt_x[4]
+            print("set x fixed d to {self.x_fixed_d}")
+        else:
+            x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_single_sigmoid(
+                X_vals, R_vals_x)
+            print(x_params)
+            self.x_feature_pos.set(x_center)
+            self.x_origin = x_center
         self.after(0, self.update_x_fit, X_vals, R_vals_x, x_fit)
 
         # --- Y SCAN ---
@@ -627,13 +638,20 @@ class ScanningMicroscopeGUI(tk.Tk):
 
         ESP.quick_command("2VA0.2")
         print("running fit for Y")
-        y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid(
-            Y_vals, R_vals_y, 5)
-        print(y_params)
-        self.y_feature_pos.set(y_center)
-        self.y_origin = y_center
-        self.y_fixed_d = popt_y[4]
-        print("set y fixed d to {self.y_fixed_d}")
+        if self.single_sigmoid.get() == False:
+            y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid(
+                Y_vals, R_vals_y, 5)
+            print(y_params)
+            self.y_feature_pos.set(y_center)
+            self.y_origin = y_center
+            self.y_fixed_d = popt_y[4]
+            print("set y fixed d to {self.y_fixed_d}")
+        else:
+            y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_single_sigmoid(
+                Y_vals, R_vals_y)
+            print(y_params)
+            self.y_feature_pos.set(y_center)
+            self.y_origin = y_center
         self.after(0, self.update_y_fit, Y_vals, R_vals_y, y_fit)
         
     def align(self):
@@ -678,7 +696,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         ESP.quick_command("1VA0.2")
         print("running fit for X")
         try:
-            x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid_fixed_d(X_vals, R_vals_x, self.x_fixed_d)
+            if self.single_sigmoid.get() == False:
+                x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid_fixed_d(X_vals, R_vals_x, self.x_fixed_d)
+            else:
+                x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_single_sigmoid(
+                X_vals, R_vals_x)
         except Exception as e:
             print(f"Unexpected error in fit_double_sigmoid: {e}")
             x_params = None
@@ -716,8 +738,12 @@ class ScanningMicroscopeGUI(tk.Tk):
         ESP.quick_command("2VA0.2")
         print("running fit for Y")
         try:
-            y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid_fixed_d(
-                Y_vals, R_vals_y, self.y_fixed_d)
+            if self.single_sigmoid.get() == False:
+                y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid_fixed_d(
+                    Y_vals, R_vals_y, self.y_fixed_d)
+            else:
+                y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_single_sigmoid(
+                    Y_vals, R_vals_y)
         except Exception as e:
             print(f"Unexpected error in fit_double_sigmoid: {e}")
             y_params = None

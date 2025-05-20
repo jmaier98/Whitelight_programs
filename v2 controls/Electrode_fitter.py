@@ -9,6 +9,13 @@ def double_sigmoid(x, C, A, k, x0, d):
     s2 = A / (1 + np.exp(-k * (x - (x0 + d))))
     return C + s1 - s2
 
+def single_sigmoid(x, C, A, k, x0):
+    """
+    Constant plus one rising sigmoid at x0 and one falling sigmoid at x0+d.
+    """
+    s1 = A / (1 + np.exp(-k * (x - x0)))
+    return C + s1
+
 def fit_double_sigmoid(x, y, d_guess, initial_guess=None, bounds=None):
     """
     Fit y(x) to a constant + two sigmoids (fixed center separation d),
@@ -89,6 +96,56 @@ def fit_double_sigmoid(x, y, d_guess, initial_guess=None, bounds=None):
     print("done fitting")
     #print(y_fit)
     return params, rmse, y_fit, popt, pcov, popt[3]+(popt[4]/2)
+
+def fit_single_sigmoid(x, y, initial_guess=None, bounds=None):
+    x = np.asarray(x)
+    y = np.asarray(y)
+
+    # wrapper holding d fixed
+    def model(x, C, A, k, x0):
+        return single_sigmoid(x, C, A, k, x0)
+
+    # auto‐guess if needed
+    if initial_guess is None:
+        C0 = np.min(y)
+        A0 = (np.max(y) - np.min(y)) /2
+        k0 = 1.0 
+        x0_0 = x[np.argmin(y-A0)]
+        initial_guess = [C0, A0, k0, x0_0]
+        print(initial_guess)
+
+    if bounds is None:
+        bounds = (-np.inf, np.inf)
+
+    # fit
+    try:
+        popt, pcov = curve_fit(
+            model, x, y,
+            p0=initial_guess,
+            bounds=bounds,
+            maxfev=5000      # you can include this too
+        )
+    except RuntimeError as e:
+        print(f"[fit_double_sigmoid] fit did not converge: {e}")
+        # return a flag or defaults so caller can skip this point
+        return None, None, None, None, None, None
+
+    # build the fitted curve
+    y_fit = model(x, *popt)
+
+    # compute RMSE
+    rmse = np.sqrt(np.mean((y - y_fit) ** 2))
+
+    params = {
+        'C':    popt[0],
+        'A':    popt[1],
+        'k':    popt[2],
+        'x0':   popt[3]
+
+    }
+    print("done fitting")
+    #print(y_fit)
+    return params, rmse, y_fit, popt, pcov, popt[3]
 
 
 def fit_double_sigmoid_fixed_d(x, y, d_fixed, initial_guess=None, bounds=None):
