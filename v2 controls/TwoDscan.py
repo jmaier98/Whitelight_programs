@@ -80,6 +80,10 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.notes_text = None
         self.save_path_var = tk.StringVar(value="")
         self.filename_var  = tk.StringVar(value="scan2d_data.txt")
+        self.save_picture_var = tk.BooleanVar(value = True)
+        self.autosave_var = tk.BooleanVar(value = True)
+        self.display_averages_var = tk.BooleanVar(value = True)
+        self.display_x2_var = tk.BooleanVar(value = False)
 
         # --- Motion Control ---
         self.wavelength_entry_var = tk.StringVar(value="0")
@@ -94,6 +98,9 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.CL_entry_var = tk.StringVar(value="6e-10")
         self.BGS_entry_var = tk.StringVar(value="0")
         self.BGE_entry_var = tk.StringVar(value="0")
+        self.scan_index_display = tk.DoubleVar(value = 0.0)
+        self.y_index_display = tk.DoubleVar(value = 0.0)
+        self.x_index_display = tk.DoubleVar(value = 0.0)
 
         # --- Stabilization routine vars ---
         self.x_init_pos_var = tk.StringVar(value="0")
@@ -428,29 +435,19 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.notes_text = ScrolledText(metadata_frame, wrap=tk.WORD, width=25, height=4)
         self.notes_text.pack(fill=tk.X)
 
-        self.labelsf = ttk.Label(metadata_frame, text="Save Picture Off")
-        self.labelsf.pack(fill=tk.X)
+        save_picture_check = ttk.Checkbutton(metadata_frame, text='save picture', variable = self.save_picture_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.save_picture_var.get()))
+        save_picture_check.pack(fill=tk.X)
 
-        self.switch_var = tk.BooleanVar(value=False)
-        self.switch = ttk.Checkbutton(metadata_frame,
-            text="",
-            variable=self.switch_var,
-            command=self.toggle_switch,
-            style="Switch.TCheckbutton"
-        )
-        self.switch.pack(fill=tk.X)
+        autosave_check = ttk.Checkbutton(metadata_frame, text='autosave', variable = self.autosave_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.autsave.get()))
+        autosave_check.pack(fill=tk.X)
 
-        self.labelAS = ttk.Label(metadata_frame, text="Autosave Off")
-        self.labelAS.pack(fill=tk.X)
+        display_averages_check = ttk.Checkbutton(metadata_frame, text='display averages', variable = self.display_averages_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.display_averages_var.get()))
+        display_averages_check.pack(fill=tk.X)
 
-        self.switch_var_autosave = tk.BooleanVar(value=False)
-        self.switchAS = ttk.Checkbutton(metadata_frame,
-            text="",
-            variable=self.switch_var_autosave,
-            command=self.toggle_switch_autosave,
-            style="Switch.TCheckbutton"
-        )
-        self.switchAS.pack(fill=tk.X)
+        show_data2_check = ttk.Checkbutton(metadata_frame, text='show data2', variable = self.display_x2_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.display_x2_var.get()))
+        show_data2_check.pack(fill=tk.X)
+        
+
 
         # ------------------------------------------------------------
         # 4) Frame for file saving
@@ -545,6 +542,15 @@ class ScanningMicroscopeGUI(tk.Tk):
             .grid(row=7, column=1, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.BGE_entry_var)\
             .grid(row=7, column=2, padx=5, pady=5, sticky="ew")
+        ttk.Label(motion_frame, text="Scan Number").grid(row=8, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(motion_frame, text="Y index").grid(row=8, column=1, padx=5, pady=5, sticky="ew")
+        ttk.Label(motion_frame, text="X index").grid(row=8, column=2, padx=5, pady=5, sticky="ew")
+        scan_disp_entry = ttk.Entry(motion_frame, textvariable = self.scan_index_display, state = "readonly")
+        scan_disp_entry.grid(row=9, column=0, padx=5, pady=5, sticky="ew")
+        y_disp_entry = ttk.Entry(motion_frame, textvariable = self.y_index_display, state = "readonly")
+        y_disp_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
+        x_disp_entry = ttk.Entry(motion_frame, textvariable = self.x_index_display, state = "readonly")
+        x_disp_entry.grid(row=9, column=2, padx=5, pady=5, sticky="ew")
         
         self.scan_thread = None
         self.is_scanning = False
@@ -1007,6 +1013,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             #self.stepInd("Delay time (ps)",scanNum*10-50)
             if self.align_before_scans.get() == True:
                 self._run_align()
+            self.scan_index_display.set(scanNum)
             for row in range(len(X)):
                 self.row = row
                 print(f"on y value {row}")
@@ -1018,8 +1025,10 @@ class ScanningMicroscopeGUI(tk.Tk):
                     self.stepInd(y_var,Y[row,0],x_2 = y2[row])
                 else:  
                     self.stepInd(y_var,Y[row,0])
+                self.y_index_display.set(row)
                 for column in range(len(X[0])):
                     self.column = column
+                    self.x_index_display.set(column)
                     if not self.scan_running:
                         break
                     if x_var == "Gate line cut (set TG)":
@@ -1034,7 +1043,7 @@ class ScanningMicroscopeGUI(tk.Tk):
                     self.after(0, self.update_image_data, scanNum, x_var, y_var, z_var)
         self.is_scanning = False
         self.scan_running = False
-        if not self.switch_var_autosave:
+        if self.autosave_var.get():
             self.save_data()
     def take_data(self,scanNum,row,column,z_var,x,y):
         if z_var == "random":
@@ -1313,7 +1322,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} deltaR     R     empty")
         header_str = "\n".join(header_lines)
         np.savetxt(filename, data_to_save, header=header_str, comments="")
-        if not self.switch_var:
+        if self.save_picture_var.get():
             picfilename = self.save_path_var.get()+'/'+self.filename_var.get()+".png"
             self.fig.savefig(picfilename)
         print("data saved to " +filename)
