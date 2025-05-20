@@ -8,7 +8,7 @@ import threading
 import time
 import datetime
 import ESP301
-import lockin_driver_v3 as lockin
+import lockin_driver_v2 as lockin
 import SP2500
 import Photon_counter_driver as PC
 import z_stage_driver as Zstage
@@ -62,6 +62,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.y_start_var = tk.StringVar(value="0")
         self.y_end_var   = tk.StringVar(value="5")
         self.y_step_var  = tk.StringVar(value="1")
+
         
         # --- Other scanning parameters ---
         self.averages_var   = tk.StringVar(value="1")
@@ -121,6 +122,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.move_after_align = tk.BooleanVar(value = False)
         self.x_target = tk.DoubleVar(value=0.0)
         self.y_target = tk.DoubleVar(value=0.0)
+        self.custom = tk.BooleanVar(value = False)
 
         # --- General Settings ---
         self.acquisition_time = tk.DoubleVar(value = 1.0)
@@ -320,6 +322,9 @@ class ScanningMicroscopeGUI(tk.Tk):
 
         set_PC_button = ttk.Button(control_frame2, text="update PC settings", command = self.set_pc_settings)
         set_PC_button.grid(row=20, column=0, padx=5, pady=10, sticky="ew")
+        
+        custom_check = ttk.Checkbutton(control_frame2, text='use custom tg cut values', variable = self.custom, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom.get()))
+        custom_check.grid(row=21, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
         # ------------------------------------------------------------
@@ -733,6 +738,9 @@ class ScanningMicroscopeGUI(tk.Tk):
             print(f"moving back to x={self.x_target.get()}, y={self.y_target.get()}")
             ESP.moveX(self.x_target.get()+self.x_offset)
             ESP.moveY(self.y_target.get()+self.y_offset)
+        time.sleep(3)
+        lockin.readx1()
+        lockin.readx2()
         
 
     def update_alignment_trackers(self):
@@ -947,6 +955,9 @@ class ScanningMicroscopeGUI(tk.Tk):
             BGS = float(self.BGS_entry_var.get())
             BGE = float(self.BGE_entry_var.get())
             y2 = np.linspace(BGS, BGE, len(y0))
+        if self.custom.get():
+            y0 = np.array([-2,-.75,-.25,2])
+            y2 = np.array([-4,-1.5,-.5,4])
         self.x0 = x0
         self.y0 = y0
         X,Y = np.meshgrid(x0,y0)
@@ -966,15 +977,17 @@ class ScanningMicroscopeGUI(tk.Tk):
             self.data[scanNum,:,:,0] = scanNum
             self.data[scanNum,:,:,1] = Y
             self.data[scanNum,:,:,2] = X
+            print(f"starting scan number {scanNum}")
             #self.stepInd("Delay time (ps)",scanNum*10-50)
             if self.align_before_scans.get() == True:
                 self._run_align()
             for row in range(len(X)):
                 self.row = row
-                if row % self.x_scan_alignment_n.get() == 0 and self.align_every_n_xscans.get() == True:
-                    self._run_align()
+                print(f"on y value {row}")
                 if not self.scan_running:
                     break
+                if row % self.x_scan_alignment_n.get() == 0 and self.align_every_n_xscans.get() == True:
+                    self._run_align()
                 if y_var == "Gate line cut (set TG)":
                     self.stepInd(y_var,Y[row,0],x_2 = y2[row])
                 else:  
@@ -1138,7 +1151,7 @@ class ScanningMicroscopeGUI(tk.Tk):
                 curr1 = keithley.set_backgate_voltage(initial)
                 curr2 = keithley.get_topgate_current()
                 if (abs(curr1) > self.currlimit) or (abs(curr2) > self.currlimit):
-                    print(f"current limit exceeded when topgate set to {x}\nset both gates to 0V")
+                    print(f"current limit exceeded when backgate set to {x}\nset both gates to 0V")
                     keithley.ramp_topgate_voltage(0,.05)
                     keithley.ramp_backgate_voltage(0,.05)
                     self.scan_running = False
@@ -1154,7 +1167,7 @@ class ScanningMicroscopeGUI(tk.Tk):
                 curr1 = keithley.set_backgate_voltage(initial)
                 curr2 = keithley.get_topgate_current()
                 if (abs(curr1) > self.currlimit) or (abs(curr2) > self.currlimit):
-                    print(f"current limit exceeded when topgate set to {x}\nset both gates to 0V")
+                    print(f"current limit exceeded when backgate set to {x}\nset both gates to 0V")
                     keithley.ramp_topgate_voltage(0,.05)
                     keithley.ramp_backgate_voltage(0,.05)
                     self.scan_running = False

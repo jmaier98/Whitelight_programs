@@ -21,6 +21,7 @@ class Lakeshore335:
         self.inst.write_termination = "\n"
         self.enable_heater()  # Automatically enable heater on startup
 
+
     def enable_heater(self):
         """Enable the heater output and set to PID mode (auto)."""
         try:
