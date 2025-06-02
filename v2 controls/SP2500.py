@@ -94,7 +94,51 @@ class Spectrometer:
                     time.sleep(0.5)
                     attempts += 1
         return x
+    
+    def print_installed_gratings(self):
+        """
+        Query and print the list of all gratings currently installed
+        (groove densities, blaze wavelengths, and which one is active).
+        """
+        response = self.send_command("?GRATINGS", wait=0.5, read_bytes=500)
+        print("Installed gratings:")
+        for line in response.splitlines():
+            # lines typically look like:
+            # " 1: 1200 g/mm, blaze 500nm"
+            # or "-> 2:  600 g/mm, blaze 750nm"
+            print(f"  {line.strip()}")
 
+    def print_selected_grating(self):
+        """
+        Query and print the number of the currently selected grating.
+        """
+        response = self.send_command("?GRATING", wait=0.2, read_bytes=50)
+        # Expecting something like "3" or " 3"
+        match = re.search(r"\d+", response)
+        if match:
+            current = int(match.group())
+            print(f"Current selected grating: {current}")
+        else:
+            print("Could not parse current grating from response.")
+
+    def switch_grating(self, grating_number, turret=None):
+        """
+        Switch to the specified grating (1–9). Optionally switch to a given turret (1–3) first.
+        """
+        if turret is not None:
+            # select the turret
+            self.send_command(f"{turret} TURRET")
+        # now place the desired grating into the beam
+        self.send_command(f"{grating_number} GRATING")
+        # verify
+        time.sleep(5)
+        response = self.send_command("?GRATING", wait=0.2, read_bytes=50)
+        match = re.search(r"\d+", response)
+        if match and int(match.group()) == grating_number:
+            print(f"✅ Switched to grating {grating_number}")
+        else:
+            print(f"⚠️  Failed to switch—response was: {response.strip()}")
+            
     def close(self):
         """
         Close the serial connection.
@@ -108,9 +152,12 @@ if __name__ == "__main__":
     
     nm_value = spec.get_nm()
     print(f"Current nm: {nm_value}")
-    
-    spec.set_nm_min(5000)
-    spec.set_nm(0)
+    spec.switch_grating(2)
+    #time.sleep(5)
+    spec.print_selected_grating()
+    spec.print_installed_gratings()
+    #spec.set_nm_min(5000)
+    #spec.set_nm(0)
     
     spec.close()
 

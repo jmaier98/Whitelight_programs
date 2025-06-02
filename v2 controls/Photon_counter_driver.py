@@ -91,7 +91,7 @@ class SR400:
         time.sleep(self.acquisition_time + 0.1)
         return self.read_counts()
     def set_t_and_disc(self,t,disc):
-        self.inst.write(f"GM 0,0")
+        #self.inst.write(f"GM 0,0")
         time.sleep(0.05)
         self.set_discriminator(disc, channel=0)
         time.sleep(0.05)
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     
     # Set acquisition time to 1 second.
     #sr400.set_acquisition_time(1.0)
-    #sr400.set_gate(1)
+    sr400.set_gate(1)
     # Set discriminator level to 0.05 V on channel A.
     sr400.set_discriminator(-0.005, channel=0)
     

@@ -97,10 +97,10 @@ if __name__ == "__main__":
     esp = ESP301()
     esp.enable_motors()
     esp.home_axis(3)
-    #esp.home_axis(1)
-    #esp.home_axis(2)
-    #esp.moveX(0)
-    #esp.moveY(0)
+    esp.home_axis(1)
+    esp.home_axis(2)
+    esp.moveX(0)
+    esp.moveY(0)
     esp.moveZ(0)    # Move Z to 2.5
 
     esp.close()

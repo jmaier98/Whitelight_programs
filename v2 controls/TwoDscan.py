@@ -131,6 +131,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.y_target = tk.DoubleVar(value=0.0)
         self.custom = tk.BooleanVar(value = False)
         self.single_sigmoid = tk.BooleanVar(value = False)
+        self.sweep_polarization = tk.BooleanVar(value = False)
 
         # --- General Settings ---
         self.acquisition_time = tk.DoubleVar(value = 1.0)
@@ -336,6 +337,9 @@ class ScanningMicroscopeGUI(tk.Tk):
         
         custom_check = ttk.Checkbutton(control_frame2, text='use custom tg cut values', variable = self.custom, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom.get()))
         custom_check.grid(row=22, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+
+        sweep_polarization_check = ttk.Checkbutton(control_frame2, text='Sweep Polarization', variable = self.sweep_polarization, onvalue=True, offvalue=False, command=lambda: print("Now:", self.sweep_polarization.get()))
+        sweep_polarization_check.grid(row=23, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
         # ------------------------------------------------------------
@@ -363,8 +367,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             "lockin 1",
             "lockin 2",
             "lockin 3",
-            "X and Y Current",
-            "X+, Y+, and Y- Current",
+            "Photocurrent and R",
             "random"
         ]
         z_menu = ttk.OptionMenu(axes_frame, self.z_axis_var, z_options[0], *z_options)
@@ -438,7 +441,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         save_picture_check = ttk.Checkbutton(metadata_frame, text='save picture', variable = self.save_picture_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.save_picture_var.get()))
         save_picture_check.pack(fill=tk.X)
 
-        autosave_check = ttk.Checkbutton(metadata_frame, text='autosave', variable = self.autosave_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.autsave.get()))
+        autosave_check = ttk.Checkbutton(metadata_frame, text='autosave', variable = self.autosave_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.autosave.get()))
         autosave_check.pack(fill=tk.X)
 
         display_averages_check = ttk.Checkbutton(metadata_frame, text='display averages', variable = self.display_averages_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.display_averages_var.get()))
@@ -517,11 +520,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         ttk.Entry(motion_frame, textvariable=self.BG_entry_var)\
             .grid(row=5, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
 
-        '''# Row 6: set Waveplate and its entry box
+        # Row 6: set Waveplate and its entry box
         ttk.Button(motion_frame, text="set Waveplate anngle", command=self.set_WP)\
             .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.WP_entry_var)\
-            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
 
         '''# Row 7: set Reverse DT Yaxis and its entry box
         ttk.Button(motion_frame, text="set Yaxis Delay", command=self.set_YD)\
@@ -529,11 +532,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         ttk.Entry(motion_frame, textvariable=self.YD_entry_var)\
             .grid(row=7, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
-        # Row 6: set gate current limit
+        '''# Row 6: set gate current limit
         ttk.Button(motion_frame, text="set Current Limit", command=self.set_CL)\
             .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.CL_entry_var)\
-            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
         # Row 7: set BG start and end for line gate cut
         ttk.Label(motion_frame, text="Cut BG start : end")\
@@ -593,7 +596,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 X_vals.append(((float(pos) - 6.1) * -175)-self.x_offset)
-                R_vals_x.append(lockin.readx1())
+                R_vals_x.append(lockin.readx3())
                 self.after(0, self.update_x_alignment_cut, X_vals, R_vals_x)
                 if abs(float(pos) - x1) < 1e-4:
                     break
@@ -633,7 +636,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 Y_vals.append(((float(pos) - 6.1) * 240)-self.y_offset)
-                R_vals_y.append(lockin.readx1())
+                R_vals_y.append(lockin.readx3())
                 self.after(0, self.update_y_alignment_cut, Y_vals, R_vals_y)
                 if abs(float(pos) - y1) < 1e-4:
                     break
@@ -690,7 +693,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 X_vals.append(((float(pos) - 6.1) * -175)-self.x_offset)
-                R_vals_x.append(lockin.readx1())
+                R_vals_x.append(lockin.readx3())
                 self.after(0, self.update_x_alignment_cut, X_vals, R_vals_x)
                 if abs(float(pos) - x1) < 1e-4:
                     break
@@ -732,7 +735,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 Y_vals.append(((float(pos) - 6.1) * 240)-self.y_offset)
-                R_vals_y.append(lockin.readx1())
+                R_vals_y.append(lockin.readx3())
                 self.after(0, self.update_y_alignment_cut, Y_vals, R_vals_y)
                 if abs(float(pos) - y1) < 1e-4:
                     break
@@ -1011,6 +1014,10 @@ class ScanningMicroscopeGUI(tk.Tk):
             self.data[scanNum,:,:,2] = X
             print(f"starting scan number {scanNum}")
             #self.stepInd("Delay time (ps)",scanNum*10-50)
+            if self.sweep_polarization.get():
+                sweep_p_vals = [0,10,20,30,40,50,60,70,80,90]
+                self.stepInd("Waveplate angle",sweep_p_vals[scanNum])
+                print(f"moved waveplate to {sweep_p_vals[scanNum]}")
             if self.align_before_scans.get() == True:
                 self._run_align()
             self.scan_index_display.set(scanNum)
@@ -1059,15 +1066,22 @@ class ScanningMicroscopeGUI(tk.Tk):
             r = lockin.readx1()
             if r == 0:
                 r = 1e-9
-            self.data[scanNum,row,column,3:] = [dr,r,dr/r]
+            self.data[scanNum,row,column,3:] = [dr,dr/r,r]
         if z_var == "deltaR/R alternate":
             self.data[scanNum,row,column,3:5] = [lockin.readx3(),lockin.readx1()]
         if z_var == "Photon counter":
             counts = sr400.acquire()
             self.data[scanNum,row,column,3:] = [counts,counts,counts]
+        if z_var == "Photocurrent and R":
+            I_plus = lockin.readx2()
+            I_minus = lockin.readx1()
+            R = lockin.readx3()
+            self.data[scanNum,row,column,3:] = [I_plus,I_minus,R]
         self.avg_data[row,column,3] = np.mean(self.data[:scanNum+1,row,column,3])
         self.avg_data[row,column,4] = np.mean(self.data[:scanNum+1,row,column,4])
         self.avg_data[row,column,5] = np.mean(self.data[:scanNum+1,row,column,5])
+        
+        
     def stepInd(self, x_var, x, x_2 = 0):
         if x_var == "dummy":
             print("dummy = "+str(x))
@@ -1238,19 +1252,23 @@ class ScanningMicroscopeGUI(tk.Tk):
 
     def update_image_data(self, scanNum, x_var, y_var, z_var):
         """Update the image data in the plot, this runs in the main thread."""
-        averages = True
-        if averages:
+
+        if self.display_averages_var.get():
             plot_data = self.avg_data
         else:
             plot_data = self.data[scanNum,:,:,:]
-        self.image_plot_1.set_data(plot_data[:,:,3])
-        self.image_plot_1.set_clim(vmin=plot_data[:,:,3].min(), vmax=plot_data[:,:,3].max())
-        self.image_plot_2.set_data(plot_data[:,:,4])
-        self.image_plot_2.set_clim(vmin=plot_data[:,:,4].min(), vmax=plot_data[:,:,4].max())
+        if self.display_x2_var.get():
+            first_image = 4
+        else:
+            first_image = 3
+        self.image_plot_1.set_data(plot_data[:,:,first_image])
+        self.image_plot_1.set_clim(vmin=plot_data[:,:,first_image].min(), vmax=plot_data[:,:,first_image].max())
+        self.image_plot_2.set_data(plot_data[:,:,5])
+        self.image_plot_2.set_clim(vmin=plot_data[:,:,5].min(), vmax=plot_data[:,:,5].max())
         if self.frame_clicked == 1:
-            dataid = 3
+            dataid = first_image
         if self.frame_clicked == 2:
-            dataid = 4
+            dataid = 5
         self.ax[0,1].cla()
         self.linecutX = self.ax[0, 1].plot(plot_data[self.cursor_iy,:,2],plot_data[self.cursor_iy,:,dataid])
         self.ax[0, 1].plot(plot_data[self.cursor_iy,:,2],np.mean(plot_data[0:self.row,:,dataid], axis = 0))
@@ -1317,9 +1335,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         if self.z_axis_var.get() == "random":
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} lockin1 lockin2 lockin3")
         if self.z_axis_var.get() == "deltaR/R":
-            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} deltaR     R     deltaR/R")
+            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} deltaR     deltaR/R     R")
         if self.z_axis_var.get() == "deltaR/R alternate":
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} deltaR     R     empty")
+        if self.z_axis_var.get() == "Photocurrent and R":
+            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} I_plus     I_minus     R")
         header_str = "\n".join(header_lines)
         np.savetxt(filename, data_to_save, header=header_str, comments="")
         if self.save_picture_var.get():

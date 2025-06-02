@@ -107,10 +107,10 @@ def fit_single_sigmoid(x, y, initial_guess=None, bounds=None):
 
     # auto‐guess if needed
     if initial_guess is None:
-        C0 = np.min(y)
-        A0 = (np.max(y) - np.min(y)) /2
+        C0 = np.max(y)
+        A0 = -(np.max(y) - np.min(y)) 
         k0 = 1.0 
-        x0_0 = x[np.argmin(y-A0)]
+        x0_0 = x[np.argmin(y-(np.max(y)+np.min(y))/2)]
         initial_guess = [C0, A0, k0, x0_0]
         print(initial_guess)
 
