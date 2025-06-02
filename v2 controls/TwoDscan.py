@@ -368,6 +368,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             "lockin 2",
             "lockin 3",
             "Photocurrent and R",
+            "Record offsets",
             "random"
         ]
         z_menu = ttk.OptionMenu(axes_frame, self.z_axis_var, z_options[0], *z_options)
@@ -1077,6 +1078,11 @@ class ScanningMicroscopeGUI(tk.Tk):
             I_minus = lockin.readx1()
             R = lockin.readx3()
             self.data[scanNum,row,column,3:] = [I_plus,I_minus,R]
+        if z_var == "Record offsets":
+            xoff = self.x_displacements[-1]
+            yoff = self.y_displacements[-1]
+            R = lockin.readx1()
+            self.data[scanNum,row,column,3:] = [xoff,yoff,R]
         self.avg_data[row,column,3] = np.mean(self.data[:scanNum+1,row,column,3])
         self.avg_data[row,column,4] = np.mean(self.data[:scanNum+1,row,column,4])
         self.avg_data[row,column,5] = np.mean(self.data[:scanNum+1,row,column,5])
@@ -1340,6 +1346,8 @@ class ScanningMicroscopeGUI(tk.Tk):
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} deltaR     R     empty")
         if self.z_axis_var.get() == "Photocurrent and R":
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} I_plus     I_minus     R")
+        if self.z_axis_var.get() == "Record offsets":
+            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} xoff     yoff     R")
         header_str = "\n".join(header_lines)
         np.savetxt(filename, data_to_save, header=header_str, comments="")
         if self.save_picture_var.get():
