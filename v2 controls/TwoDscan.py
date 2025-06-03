@@ -597,7 +597,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 X_vals.append(((float(pos) - 6.1) * -175)-self.x_offset)
-                R_vals_x.append(lockin.readx3())
+                R_vals_x.append(lockin.readx1())
                 self.after(0, self.update_x_alignment_cut, X_vals, R_vals_x)
                 if abs(float(pos) - x1) < 1e-4:
                     break
@@ -637,7 +637,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 Y_vals.append(((float(pos) - 6.1) * 240)-self.y_offset)
-                R_vals_y.append(lockin.readx3())
+                R_vals_y.append(lockin.readx1())
                 self.after(0, self.update_y_alignment_cut, Y_vals, R_vals_y)
                 if abs(float(pos) - y1) < 1e-4:
                     break
@@ -694,7 +694,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 X_vals.append(((float(pos) - 6.1) * -175)-self.x_offset)
-                R_vals_x.append(lockin.readx3())
+                R_vals_x.append(lockin.readx1())
                 self.after(0, self.update_x_alignment_cut, X_vals, R_vals_x)
                 if abs(float(pos) - x1) < 1e-4:
                     break
@@ -736,7 +736,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             pos = ESP.quick_read()
             try:
                 Y_vals.append(((float(pos) - 6.1) * 240)-self.y_offset)
-                R_vals_y.append(lockin.readx3())
+                R_vals_y.append(lockin.readx1())
                 self.after(0, self.update_y_alignment_cut, Y_vals, R_vals_y)
                 if abs(float(pos) - y1) < 1e-4:
                     break
