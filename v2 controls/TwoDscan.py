@@ -1098,6 +1098,10 @@ class ScanningMicroscopeGUI(tk.Tk):
             while moved != True:
                 time.sleep(2)
                 moved = ESP.moveZ(x)
+            new_x = self.x_target.get()-((2.25*np.sin(x + .925))-1.8)
+            new_y = self.y_target.get()-((-2.19*np.sin(x -.678))-1.37)
+            stepInd("X pos",new_x)
+            stepInd("Y pos",new_y)
         if x_var == "Delay time (ps)":
             target_pos = self.time_zero_pos.get() + x*-.15
             if target_pos < -105:
