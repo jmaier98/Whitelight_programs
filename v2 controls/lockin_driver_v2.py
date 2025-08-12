@@ -17,16 +17,36 @@ _instruments = {
 
 def open_all_connections():
     """
-    Open persistent GPIB connections to all lockin amplifiers.
-    Call this once at the start of a scan.
+    Open persistent GPIB connections to all lockin amplifiers,
+    set proper terminators, timeouts, and clear buffers.
     """
     global _instruments
+
+    # Helper to configure each instrument
+    def _configure(inst):
+        # Ensure SR830’s CR/LF is recognized
+
+        inst.read_termination = '\n'
+        inst.write_termination = '\n'
+        # Give up to 5 s for a reply
+        inst.timeout = 5000  
+        # Flush any leftover bytes
+        try:
+            inst.clear()
+        except Exception:
+            pass
+
     if _instruments['lockin1'] is None:
         _instruments['lockin1'] = rm.open_resource(LOCKIN_GPIB_ADDRESS2)
+        _configure(_instruments['lockin1'])
+
     if _instruments['lockin2'] is None:
         _instruments['lockin2'] = rm.open_resource(LOCKIN_GPIB_ADDRESS)
+        _configure(_instruments['lockin2'])
+
     if _instruments['lockin3'] is None:
         _instruments['lockin3'] = rm.open_resource(LOCKIN_GPIB_ADDRESS3)
+        _configure(_instruments['lockin3'])
 
 def close_all_connections():
     """
@@ -49,7 +69,7 @@ def readR1():
     (Assumes that the command "OUTP? 3" returns R.)
     """
     try:
-        return float(_instruments['lockin1'].query("OUTP? 3"))
+        return float(_instruments['lockin1'].query("SNAP? 3"))
     except Exception as e:
         print(f"Error in readR1: {e}")
         return None
@@ -60,7 +80,10 @@ def readx1():
     (Assumes that the command "OUTP? 1" returns x.)
     """
     try:
-        return float(_instruments['lockin1'].query("OUTP? 1"))
+        resp = _instruments['lockin1'].query("SNAP? 1,2")
+        x_str, y_str = resp.strip().split(',')
+        return float(x_str)
+        
     except Exception as e:
         print(f"Error in readx1: {e}")
         return None
@@ -105,7 +128,9 @@ def readx2():
     (Assumes that the command "OUTP? 1" returns x.)
     """
     try:
-        return float(_instruments['lockin2'].query("OUTP? 1"))
+        resp = _instruments['lockin2'].query("SNAP? 1,2")
+        x_str, y_str = resp.strip().split(',')
+        return float(x_str)
     except Exception as e:
         print(f"Error in readx2: {e}")
         return None
@@ -139,7 +164,9 @@ def readx3():
     (Assumes that the command "OUTP? 1" returns x.)
     """
     try:
-        return float(_instruments['lockin3'].query("OUTP? 1"))
+        resp = _instruments['lockin3'].query("SNAP? 1,2")
+        x_str, y_str = resp.strip().split(',')
+        return float(x_str)
     except Exception as e:
         print(f"Error in readx3: {e}")
         return None

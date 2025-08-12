@@ -9,7 +9,7 @@ class Controller:
     def __init__(self,
                  which_port,
                  name='MLJ050',
-                 limits_mm=(0, 30),     # reduce if necessary e.g. (0, 10)
+                 limits_mm=(0, 45),     # reduce if necessary e.g. (0, 10)
                  velocity_mmps=3,       # adjust as needed
                  acceleration_mmpss=8,  # adjust as needed
                  home=True,             # default home if not 'self._homed'

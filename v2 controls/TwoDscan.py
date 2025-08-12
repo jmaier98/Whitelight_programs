@@ -129,7 +129,12 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.move_after_align = tk.BooleanVar(value = False)
         self.x_target = tk.DoubleVar(value=0.0)
         self.y_target = tk.DoubleVar(value=0.0)
-        self.custom = tk.BooleanVar(value = False)
+        self.custom_x = tk.BooleanVar(value = False)
+        self.custom_y = tk.BooleanVar(value = False)
+        self.custom_x0 = tk.StringVar(value="1,0.5,0.25,0,-1")
+        self.custom_x2 = tk.StringVar(value="1,0.5,0.25,0,-1")
+        self.custom_y0 = tk.StringVar(value="1,0.5,0.25,0,-1")
+        self.custom_y2 = tk.StringVar(value="1,0.5,0.25,0,-1")
         self.single_sigmoid = tk.BooleanVar(value = False)
         self.sweep_polarization = tk.BooleanVar(value = False)
 
@@ -335,11 +340,26 @@ class ScanningMicroscopeGUI(tk.Tk):
         set_PC_button = ttk.Button(control_frame2, text="update PC settings", command = self.set_pc_settings)
         set_PC_button.grid(row=21, column=0, padx=5, pady=10, sticky="ew")
         
-        custom_check = ttk.Checkbutton(control_frame2, text='use custom tg cut values', variable = self.custom, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom.get()))
-        custom_check.grid(row=22, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+        customx_check = ttk.Checkbutton(control_frame2, text='use custom x(TG) (and x2(BG)) values', variable = self.custom_x, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom_x.get()))
+        customx_check.grid(row=22, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
 
-        sweep_polarization_check = ttk.Checkbutton(control_frame2, text='Sweep Polarization', variable = self.sweep_polarization, onvalue=True, offvalue=False, command=lambda: print("Now:", self.sweep_polarization.get()))
-        sweep_polarization_check.grid(row=23, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+        x0_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_x0)
+        x0_list_entry.grid(row=23, column=0, padx=5, pady=5, sticky="ew")
+
+        x2_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_x2)
+        x2_list_entry.grid(row=23, column=1, padx=5, pady=5, sticky="ew")
+
+        customy_check = ttk.Checkbutton(control_frame2, text='use custom y(TG) (and y2(BG)) values', variable = self.custom_y, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom_y.get()))
+        customy_check.grid(row=24, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+
+        y0_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_y0)
+        y0_list_entry.grid(row=25, column=0, padx=5, pady=5, sticky="ew")
+
+        y2_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_y2)
+        y2_list_entry.grid(row=25, column=1, padx=5, pady=5, sticky="ew")
+
+        #sweep_polarization_check = ttk.Checkbutton(control_frame2, text='Sweep Polarization', variable = self.sweep_polarization, onvalue=True, offvalue=False, command=lambda: print("Now:", self.sweep_polarization.get()))
+        #sweep_polarization_check.grid(row=23, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
         # ------------------------------------------------------------
         # 1) Frame for selecting X, Y, and Z measurements
         # ------------------------------------------------------------
@@ -521,11 +541,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         ttk.Entry(motion_frame, textvariable=self.BG_entry_var)\
             .grid(row=5, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
 
-        # Row 6: set Waveplate and its entry box
+        ''' Row 6: set Waveplate and its entry box
         ttk.Button(motion_frame, text="set Waveplate anngle", command=self.set_WP)\
             .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.WP_entry_var)\
-            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
         '''# Row 7: set Reverse DT Yaxis and its entry box
         ttk.Button(motion_frame, text="set Yaxis Delay", command=self.set_YD)\
@@ -533,11 +553,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         ttk.Entry(motion_frame, textvariable=self.YD_entry_var)\
             .grid(row=7, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
-        '''# Row 6: set gate current limit
+        # Row 6: set gate current limit
         ttk.Button(motion_frame, text="set Current Limit", command=self.set_CL)\
             .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.CL_entry_var)\
-            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
 
         # Row 7: set BG start and end for line gate cut
         ttk.Label(motion_frame, text="Cut BG start : end")\
@@ -580,9 +600,9 @@ class ScanningMicroscopeGUI(tk.Tk):
         else:
             x1 = x0 - float(self.x_dist_var.get())
         if self.dir_y_cut.get() == "up":
-            y1 = y0 + float(self.x_dist_var.get())
+            y1 = y0 + float(self.y_dist_var.get())
         else:
-            y1 = y0 - float(self.x_dist_var.get())
+            y1 = y0 - float(self.y_dist_var.get())
         x1 = (-1*(x1+self.x_offset))/175 + 6.1
         y1 = (y1+self.y_offset)/240 + 6.1
         # --- X SCAN ---
@@ -625,7 +645,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.after(0, self.update_x_fit, X_vals, R_vals_x, x_fit)
 
         # --- Y SCAN ---
-        ESP.moveX(x0)
+        ESP.moveX(x0+self.x_offset)
         yup = lockin.readx1()
         print("moving y")
         ESP.quick_command("2VA0.0033")
@@ -677,9 +697,9 @@ class ScanningMicroscopeGUI(tk.Tk):
         else:
             x1 = x0 - float(self.x_dist_var.get())
         if self.dir_y_cut.get() == "up":
-            y1 = y0 + float(self.x_dist_var.get())
+            y1 = y0 + float(self.y_dist_var.get())
         else:
-            y1 = y0 - float(self.x_dist_var.get())
+            y1 = y0 - float(self.y_dist_var.get())
         x1 = (-1*(x1+self.x_offset))/175 + 6.1
         y1 = (y1+self.y_offset)/240 + 6.1
         # --- X SCAN ---
@@ -714,6 +734,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         except Exception as e:
             print(f"Unexpected error in fit_double_sigmoid: {e}")
             x_params = None
+        oldx_offset = self.x_offset
         if x_params is not None:
             self.x_feature_pos.set(x_center)
             self.x_offset = self.x_offset - self.x_origin + x_center
@@ -724,7 +745,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             xrmse = 0
 
         # --- Y SCAN ---
-        ESP.moveX(x0)
+        ESP.moveX(x0+oldx_offset)
         yup = lockin.readx1()
         print("moving y")
         ESP.quick_command("2VA0.0033")
@@ -991,9 +1012,12 @@ class ScanningMicroscopeGUI(tk.Tk):
             BGS = float(self.BGS_entry_var.get())
             BGE = float(self.BGE_entry_var.get())
             y2 = np.linspace(BGS, BGE, len(y0))
-        if self.custom.get():
-            y0 = np.array([-2,-.75,-.25,2])
-            y2 = np.array([-4,-1.5,-.5,4])
+        if self.custom_x.get():
+            x0 = np.fromstring(self.custom_x0.get(), dtype = float, sep = ',')
+            x2 = np.fromstring(self.custom_x2.get(), dtype = float, sep = ',')
+        if self.custom_y.get():
+            y0 = np.fromstring(self.custom_y0.get(), dtype = float, sep = ',')
+            y2 = np.fromstring(self.custom_y2.get(), dtype = float, sep = ',')
         self.x0 = x0
         self.y0 = y0
         X,Y = np.meshgrid(x0,y0)
@@ -1098,10 +1122,10 @@ class ScanningMicroscopeGUI(tk.Tk):
             while moved != True:
                 time.sleep(2)
                 moved = ESP.moveZ(x)
-            new_x = self.x_target.get()-((2.25*np.sin(x + .925))-1.8)
-            new_y = self.y_target.get()-((-2.19*np.sin(x -.678))-1.37)
-            stepInd("X pos",new_x)
-            stepInd("Y pos",new_y)
+            new_x = self.x_target.get()+((2.25*np.sin(x + .925))-1.8)
+            new_y = self.y_target.get()+((-2.19*np.sin(x -.678))-1.37)
+            self.stepInd("X pos",new_x)
+            self.stepInd("Y pos",new_y)
         if x_var == "Delay time (ps)":
             target_pos = self.time_zero_pos.get() + x*-.15
             if target_pos < -105:
