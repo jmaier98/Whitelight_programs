@@ -16,11 +16,13 @@ import matplotlib.pyplot as plt
 import keithley_driver as keithley
 import Electrode_fitter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from BTT import BTT as btt
 
 zstage = Zstage.Controller(which_port='COM8')
 spec = SP2500.Spectrometer()
 sr400 = PC.SR400(acquisition_time = 2, discriminator = -0.002)
 ESP = ESP301.ESP301()
+BTT = btt()
 lockin.open_all_connections()
 # Use the 'TkAgg' backend for matplotlib.
 matplotlib.use("TkAgg")
@@ -137,14 +139,17 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.custom_y2 = tk.StringVar(value="1,0.5,0.25,0,-1")
         self.single_sigmoid = tk.BooleanVar(value = False)
         self.sweep_polarization = tk.BooleanVar(value = False)
+        self.rotation_target = tk.DoubleVar(value=0.0)
+        self.rotation_pos_1 = tk.DoubleVar(value=0.0)
+        self.rotation_pos_2 = tk.DoubleVar(value=90.0)
 
         # --- General Settings ---
         self.acquisition_time = tk.DoubleVar(value = 1.0)
         self.discriminator = tk.DoubleVar(value = -0.005)
 
         # --- Initialize data---
-        self.data = np.zeros((1,1,1,6))
-        self.avg_data = np.zeros((1,1,6))
+        self.data = np.zeros((1,1,1,7))
+        self.avg_data = np.zeros((1,1,7))
 
         # --- Initialize cursor for linecuts and positioning
         # (Physical coordinates)
@@ -358,6 +363,22 @@ class ScanningMicroscopeGUI(tk.Tk):
         y2_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_y2)
         y2_list_entry.grid(row=25, column=1, padx=5, pady=5, sticky="ew")
 
+        rotation_pos1_entry = ttk.Entry(control_frame2, textvariable = self.rotation_pos_1)
+        rotation_pos1_entry.grid(row=26, column=0, padx=5, pady=5, sticky="ew")
+
+        rotation_pos2_entry = ttk.Entry(control_frame2, textvariable = self.rotation_pos_2)
+        rotation_pos2_entry.grid(row=26, column=1, padx=5, pady=5, sticky="ew")
+
+        ttk.Label(control_frame2, text="Rotation target (deg):").grid(row=27, column=0, padx=5, pady=5, sticky="ew")
+
+        home_rotate_button = ttk.Button(control_frame2, text="Home rotation mount", command = lambda: self.home_rotation_mount())
+        home_rotate_button.grid(row=27, column=1, padx=5, pady=5, sticky="ew")
+        rotation_target_entry = ttk.Entry(control_frame2, textvariable = self.rotation_target)
+        rotation_target_entry.grid(row=28, column=0, padx=5, pady=5, sticky="ew")  
+
+        rotate_button = ttk.Button(control_frame2, text="Rotate to target", command = self.rotate_to_target)
+        rotate_button.grid(row=28, column=1, padx=5, pady=5, sticky="ew")    
+
         #sweep_polarization_check = ttk.Checkbutton(control_frame2, text='Sweep Polarization', variable = self.sweep_polarization, onvalue=True, offvalue=False, command=lambda: print("Now:", self.sweep_polarization.get()))
         #sweep_polarization_check.grid(row=23, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
         # ------------------------------------------------------------
@@ -384,6 +405,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             "Photon counter",
             "deltaR/R",
             "deltaR/R alternate",
+            "circular dichroism",
             "lockin 1",
             "lockin 2",
             "lockin 3",
@@ -578,6 +600,10 @@ class ScanningMicroscopeGUI(tk.Tk):
         
         self.scan_thread = None
         self.is_scanning = False
+    def rotate_to_target(self):
+        BTT.rot_1(float(self.rotation_target.get()),5000)
+    def home_rotation_mount(self):
+        BTT.home_rot1()
     def set_pc_settings(self):
         sr400.set_t_and_disc(self.acquisition_time.get(),self.discriminator.get())
     def reset_offsets(self):
@@ -1079,7 +1105,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             self.save_data()
     def take_data(self,scanNum,row,column,z_var,x,y):
         if z_var == "random":
-            self.data[scanNum,row,column,3:] = [np.random.rand(),np.random.rand(),100*np.random.rand()]
+            self.data[scanNum,row,column,3:6] = [np.random.rand(),np.random.rand(),100*np.random.rand()]
         if z_var == "lockin 1":
             self.data[scanNum,row,column,3:5] = [lockin.readx1(),lockin.ready1()]
         if z_var == "lockin 2":
@@ -1091,25 +1117,35 @@ class ScanningMicroscopeGUI(tk.Tk):
             r = lockin.readx1()
             if r == 0:
                 r = 1e-9
-            self.data[scanNum,row,column,3:] = [dr,dr/r,r]
+            self.data[scanNum,row,column,3:6] = [dr,dr/r,r]
         if z_var == "deltaR/R alternate":
             self.data[scanNum,row,column,3:5] = [lockin.readx3(),lockin.readx1()]
         if z_var == "Photon counter":
             counts = sr400.acquire()
-            self.data[scanNum,row,column,3:] = [counts,counts,counts]
+            self.data[scanNum,row,column,3:6] = [counts,counts,counts]
         if z_var == "Photocurrent and R":
             I_plus = lockin.readx2()
             I_minus = lockin.readx1()
             R = lockin.readx3()
-            self.data[scanNum,row,column,3:] = [I_plus,I_minus,R]
+            self.data[scanNum,row,column,3:6] = [I_plus,I_minus,R]
         if z_var == "Record offsets":
             xoff = self.x_displacements[-1]
             yoff = self.y_displacements[-1]
             R = lockin.readx1()
-            self.data[scanNum,row,column,3:] = [xoff,yoff,R]
+            self.data[scanNum,row,column,3:6] = [xoff,yoff,R]
+        if z_var == "circular dichroism":
+            dR1 = lockin.readx2()
+            R1 = lockin.readx1()
+            BTT.rot_1(self.rotation_pos_2.get(),5000)
+            time.sleep(self.wait_time_var.get())
+            dR2 = lockin.readx2()
+            R2 = lockin.readx1()
+            self.data[scanNum,row,column,3:6] = [dR1, dR2, R1, R2]
+            BTT.rot_1(self.rotation_pos_1.get(),5000)
         self.avg_data[row,column,3] = np.mean(self.data[:scanNum+1,row,column,3])
         self.avg_data[row,column,4] = np.mean(self.data[:scanNum+1,row,column,4])
         self.avg_data[row,column,5] = np.mean(self.data[:scanNum+1,row,column,5])
+        self.avg_data[row,column,6] = np.mean(self.data[:scanNum+1,row,column,6])
         
         
     def stepInd(self, x_var, x, x_2 = 0):
@@ -1376,6 +1412,8 @@ class ScanningMicroscopeGUI(tk.Tk):
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} I_plus     I_minus     R")
         if self.z_axis_var.get() == "Record offsets":
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} xoff     yoff     R")
+        if self.z_axis_var.get() == "circular dichroism":
+            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2    R_1     R_2")    
         header_str = "\n".join(header_lines)
         np.savetxt(filename, data_to_save, header=header_str, comments="")
         if self.save_picture_var.get():
