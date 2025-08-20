@@ -1435,7 +1435,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         if self.z_axis_var.get() == "Record offsets":
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} xoff     yoff     R")
         if self.z_axis_var.get() == "circular dichroism":
-            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2    R_1     R_2")    
+            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2    R_1     R_2      dR_diff     R_diff")    
         header_str = "\n".join(header_lines)
         np.savetxt(filename, data_to_save, header=header_str, comments="")
         if self.save_picture_var.get():
