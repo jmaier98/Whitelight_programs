@@ -753,7 +753,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         print("running fit for X")
         try:
             if self.single_sigmoid.get() == False:
-                x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid_fixed_d(X_vals, R_vals_x, self.x_fixed_d)
+                x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_double_sigmoid(X_vals, R_vals_x, 5)
             else:
                 x_params, xrmse, x_fit, popt_x, pcov_x, x_center = Electrode_fitter.fit_single_sigmoid(
                 X_vals, R_vals_x)
@@ -796,8 +796,8 @@ class ScanningMicroscopeGUI(tk.Tk):
         print("running fit for Y")
         try:
             if self.single_sigmoid.get() == False:
-                y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid_fixed_d(
-                    Y_vals, R_vals_y, self.y_fixed_d)
+                y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_double_sigmoid(
+                    Y_vals, R_vals_y, 5)
             else:
                 y_params, yrmse, y_fit, popt_y, pcov_y, y_center = Electrode_fitter.fit_single_sigmoid(
                     Y_vals, R_vals_y)
@@ -1052,8 +1052,8 @@ class ScanningMicroscopeGUI(tk.Tk):
 
         
         # set up data array
-        self.data = np.zeros((n_avg,len(y0),len(x0),6))
-        self.avg_data = np.zeros((len(y0),len(x0),6))
+        self.data = np.zeros((n_avg,len(y0),len(x0),7))
+        self.avg_data = np.zeros((len(y0),len(x0),7))
         self.avg_data[:,:,1] = Y
         self.avg_data[:,:,2] = X
         self.after(0, self.prepare_plot, x_var,y_var,z_var,x0,y0)
@@ -1134,13 +1134,17 @@ class ScanningMicroscopeGUI(tk.Tk):
             R = lockin.readx1()
             self.data[scanNum,row,column,3:6] = [xoff,yoff,R]
         if z_var == "circular dichroism":
+            
             dR1 = lockin.readx2()
             R1 = lockin.readx1()
+            print("rotating to pos 2")
             BTT.rot_1(self.rotation_pos_2.get(),5000)
-            time.sleep(self.wait_time_var.get())
+            print("waiting")
+            time.sleep(float(self.wait_time_var.get()))
             dR2 = lockin.readx2()
             R2 = lockin.readx1()
-            self.data[scanNum,row,column,3:6] = [dR1, dR2, R1, R2]
+            print("rotating to pos 1")
+            self.data[scanNum,row,column,3:7] = [dR1, dR2, R1, R2]
             BTT.rot_1(self.rotation_pos_1.get(),5000)
         self.avg_data[row,column,3] = np.mean(self.data[:scanNum+1,row,column,3])
         self.avg_data[row,column,4] = np.mean(self.data[:scanNum+1,row,column,4])
@@ -1373,7 +1377,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         print("Stopping scan...")
 
     def save_data(self):
-        data_to_save = self.data.reshape(-1,6)
+        data_to_save = self.data.reshape(-1,7)
         filename = self.save_path_var.get()+'/'+self.filename_var.get()+".txt"
         date_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         notes = self.notes_text.get("1.0", tk.END).strip()

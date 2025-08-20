@@ -397,7 +397,7 @@ class App(tk.Tk):
         self.after(1000, self.update_plot)
 
     def update_pid_display(self):
-        """Update the PID display every 5 seconds."""
+        """Update the PID display every 1 minute."""
         try:
             p, i, d = self.lakeshore.get_pid_values()
             self.pid_display_var.set(f"P={p:.2f}, I={i:.2f}, D={d:.2f}")
@@ -406,7 +406,7 @@ class App(tk.Tk):
             print("Error reading PID values:", e)
         
         # Schedule next update
-        self.after(5000, self.update_pid_display)
+        self.after(60000, self.update_pid_display)
 
     def on_update_interval_change(self, event=None):
         """Called when the update interval changes."""

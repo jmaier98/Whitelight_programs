@@ -8,7 +8,7 @@ class BTT:
     def __init__(self):
         super().__init__()
         self.baud = 115200
-        self.d3 = serial.Serial('COM8', self.baud, timeout=1) #4 rots
+        self.d3 = serial.Serial('COM4', self.baud, timeout=1) #4 rots
         time.sleep(0.5)
         self.d3.write(('M302 S0\n').encode())
         time.sleep(0.05)
