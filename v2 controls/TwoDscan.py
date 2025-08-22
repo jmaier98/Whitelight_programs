@@ -495,7 +495,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         display_averages_check = ttk.Checkbutton(metadata_frame, text='display averages', variable = self.display_averages_var, onvalue=True, offvalue=False, command=lambda: print("Now:", self.display_averages_var.get()))
         display_averages_check.pack(fill=tk.X)
 
-        ttk.Label(axes_frame, text="Plot_1 data:").pack(anchor=tk.W)
+        ttk.Label(metadata_frame, text="Plot_1 data:").pack(anchor=tk.W)
         self.data_options = [
             "3 (dR, dR1, I+, xdisp, etc.)",
             "4 (dR/R, dR2, I-, ydisp, etc.)",
@@ -504,11 +504,11 @@ class ScanningMicroscopeGUI(tk.Tk):
             "7 (dR1-dR2)",
             "8 (R1-R2)",
         ]
-        plot_1_menu = ttk.OptionMenu(axes_frame, self.plot1_column, self.data_options[0], *self.data_options)
+        plot_1_menu = ttk.OptionMenu(metadata_frame, self.plot1_column, self.data_options[0], *self.data_options)
         plot_1_menu.pack(fill=tk.X)
 
-        ttk.Label(axes_frame, text="Plot_2 data:").pack(anchor=tk.W)
-        plot_2_menu = ttk.OptionMenu(axes_frame, self.plot2_column, self.data_options[2], *self.data_options)
+        ttk.Label(metadata_frame, text="Plot_2 data:").pack(anchor=tk.W)
+        plot_2_menu = ttk.OptionMenu(metadata_frame, self.plot2_column, self.data_options[2], *self.data_options)
         plot_2_menu.pack(fill=tk.X)
         
 
@@ -1162,7 +1162,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             dR2 = lockin.readx2()
             R2 = lockin.readx1()
             print("rotating to pos 1")
-            self.data[scanNum,row,column,3:7] = [dR1, dR2, R1, R2, dR1-dR2, R1-R2]
+            self.data[scanNum,row,column,3:9] = [dR1, dR2, R1, R2, dR1-dR2, R1-R2]
             BTT.rot_1(self.rotation_pos_1.get(),5000)
         self.avg_data[row,column,3] = np.mean(self.data[:scanNum+1,row,column,3])
         self.avg_data[row,column,4] = np.mean(self.data[:scanNum+1,row,column,4])
