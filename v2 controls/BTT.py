@@ -22,15 +22,13 @@ class BTT:
         time.sleep(wait)
 
         
-    def home_rot1(self):  
-        self.send_gcode(3, 'G28 X')
-
-        
     def rot_1(self, angle_x, feedrate):
         travel_mm = angle_x / ROTATION_MOUNT
         self.send_gcode(3, f'G0 X{travel_mm:.3f} F{feedrate}')
         
-
+    def rot_2(self, angle_x, feedrate):
+        travel_mm = angle_x / ROTATION_MOUNT
+        self.send_gcode(3, f'G0 Y{travel_mm:.3f} F{feedrate}')
         
     def close(self):
         self.d3.close()
