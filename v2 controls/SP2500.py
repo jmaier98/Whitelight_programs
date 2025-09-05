@@ -152,8 +152,8 @@ if __name__ == "__main__":
     
     nm_value = spec.get_nm()
     print(f"Current nm: {nm_value}")
-    spec.switch_grating(3)
-    time.sleep(5)
+    #spec.switch_grating(3)
+    #time.sleep(5)
     spec.print_selected_grating()
     spec.print_installed_gratings()
     #spec.set_nm_min(5000)

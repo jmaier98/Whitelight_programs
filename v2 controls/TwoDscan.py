@@ -351,56 +351,56 @@ class ScanningMicroscopeGUI(tk.Tk):
         set_PC_button.grid(row=21, column=0, padx=5, pady=10, sticky="ew")
         
         customx_check = ttk.Checkbutton(control_frame2, text='use custom x(TG) (and x2(BG)) values', variable = self.custom_x, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom_x.get()))
-        customx_check.grid(row=22, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+        customx_check.grid(row=22, column=0, columnspan = 2, padx=5, pady=0, sticky="ew")
 
         x0_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_x0)
-        x0_list_entry.grid(row=23, column=0, padx=5, pady=5, sticky="ew")
+        x0_list_entry.grid(row=23, column=0, padx=5, pady=0, sticky="ew")
 
         x2_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_x2)
-        x2_list_entry.grid(row=23, column=1, padx=5, pady=5, sticky="ew")
+        x2_list_entry.grid(row=23, column=1, padx=5, pady=0, sticky="ew")
 
         customy_check = ttk.Checkbutton(control_frame2, text='use custom y(TG) (and y2(BG)) values', variable = self.custom_y, onvalue=True, offvalue=False, command=lambda: print("Now:", self.custom_y.get()))
-        customy_check.grid(row=24, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
+        customy_check.grid(row=24, column=0, columnspan = 2, padx=5, pady=0, sticky="ew")
 
         y0_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_y0)
-        y0_list_entry.grid(row=25, column=0, padx=5, pady=5, sticky="ew")
+        y0_list_entry.grid(row=25, column=0, padx=5, pady=0, sticky="ew")
 
         y2_list_entry = ttk.Entry(control_frame2, textvariable = self.custom_y2)
-        y2_list_entry.grid(row=25, column=1, padx=5, pady=5, sticky="ew")
+        y2_list_entry.grid(row=25, column=1, padx=5, pady=0, sticky="ew")
 
-        ttk.Label(control_frame2, text="Rot 1 pos 1").grid(row=26, column=0, padx=5, pady=5, sticky="ew")
-        ttk.Label(control_frame2, text="Rot 1 pos 2").grid(row=26, column=1, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Rot 1 pos 1").grid(row=26, column=0, padx=5, pady=0, sticky="ew")
+        ttk.Label(control_frame2, text="Rot 1 pos 2").grid(row=26, column=1, padx=5, pady=0, sticky="ew")
 
         rotation_pos1_entrya = ttk.Entry(control_frame2, textvariable = self.rotation_pos_1a)
-        rotation_pos1_entrya.grid(row=27, column=0, padx=5, pady=5, sticky="ew")
+        rotation_pos1_entrya.grid(row=27, column=0, padx=5, pady=0, sticky="ew")
 
         rotation_pos2_entrya = ttk.Entry(control_frame2, textvariable = self.rotation_pos_2a)
-        rotation_pos2_entrya.grid(row=27, column=1, padx=5, pady=5, sticky="ew")
+        rotation_pos2_entrya.grid(row=27, column=1, padx=5, pady=0, sticky="ew")
 
-        ttk.Label(control_frame2, text="Rot 1 target (deg):").grid(row=28, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Rot 1 target (deg):").grid(row=28, column=0, padx=5, pady=0, sticky="ew")
 
         rotation_target_entrya = ttk.Entry(control_frame2, textvariable = self.rotation_target_a)
         rotation_target_entrya.grid(row=29, column=0, padx=5, pady=5, sticky="ew")  
 
         rotate_buttona = ttk.Button(control_frame2, text="Rotate to target", command = self.rotate_to_target_1)
-        rotate_buttona.grid(row=29, column=1, padx=5, pady=5, sticky="ew")
+        rotate_buttona.grid(row=29, column=1, padx=5, pady=0, sticky="ew")
 
-        ttk.Label(control_frame2, text="Rot 2 pos 1").grid(row=30, column=0, padx=5, pady=5, sticky="ew")
-        ttk.Label(control_frame2, text="Rot 2 pos 2").grid(row=30, column=1, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Rot 2 pos 1").grid(row=30, column=0, padx=5, pady=0, sticky="ew")
+        ttk.Label(control_frame2, text="Rot 2 pos 2").grid(row=30, column=1, padx=5, pady=0, sticky="ew")
 
         rotation_pos1_entryb = ttk.Entry(control_frame2, textvariable = self.rotation_pos_1b)
         rotation_pos1_entryb.grid(row=31, column=0, padx=5, pady=5, sticky="ew")
 
         rotation_pos2_entryb = ttk.Entry(control_frame2, textvariable = self.rotation_pos_2b)
-        rotation_pos2_entryb.grid(row=31, column=1, padx=5, pady=5, sticky="ew")
+        rotation_pos2_entryb.grid(row=31, column=1, padx=5, pady=0, sticky="ew")
 
-        ttk.Label(control_frame2, text="Rot 2 target (deg):").grid(row=32, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Label(control_frame2, text="Rot 2 target (deg):").grid(row=32, column=0, padx=5, pady=0, sticky="ew")
 
         rotation_target_entryb = ttk.Entry(control_frame2, textvariable = self.rotation_target_b)
-        rotation_target_entryb.grid(row=33, column=0, padx=5, pady=5, sticky="ew")  
+        rotation_target_entryb.grid(row=33, column=0, padx=5, pady=0, sticky="ew")  
 
         rotate_buttonb = ttk.Button(control_frame2, text="Rotate to target", command = self.rotate_to_target_2)
-        rotate_buttonb.grid(row=33, column=1, padx=5, pady=5, sticky="ew")    
+        rotate_buttonb.grid(row=33, column=1, padx=5, pady=0, sticky="ew")    
 
         #sweep_polarization_check = ttk.Checkbutton(control_frame2, text='Sweep Polarization', variable = self.sweep_polarization, onvalue=True, offvalue=False, command=lambda: print("Now:", self.sweep_polarization.get()))
         #sweep_polarization_check.grid(row=23, column=0, columnspan = 2, padx=5, pady=5, sticky="ew")
@@ -525,7 +525,8 @@ class ScanningMicroscopeGUI(tk.Tk):
             "7 (dR1-dR2 | R1)",
             "8 (R1-R2 | R2)",
             "9 (R3)",
-            "10 (R4)"
+            "1 (R4)",
+            "2 (dR1-dR4)"
         ]
         plot_1_menu = ttk.OptionMenu(metadata_frame, self.plot1_column, self.data_options[0], *self.data_options)
         plot_1_menu.pack(fill=tk.X)
@@ -1093,8 +1094,8 @@ class ScanningMicroscopeGUI(tk.Tk):
 
         
         # set up data array
-        self.data = np.zeros((n_avg,len(y0),len(x0),11))
-        self.avg_data = np.zeros((len(y0),len(x0),11))
+        self.data = np.zeros((n_avg,len(y0),len(x0),12))
+        self.avg_data = np.zeros((len(y0),len(x0),12))
         self.avg_data[:,:,1] = Y
         self.avg_data[:,:,2] = X
         self.after(0, self.prepare_plot, x_var,y_var,z_var,x0,y0)
@@ -1134,7 +1135,7 @@ class ScanningMicroscopeGUI(tk.Tk):
                         self.stepInd(x_var,X[row,column],x_2 = x2[column])
                     else:  
                         self.stepInd(x_var,X[row,column])
-                    time.sleep(wait_time)
+                    time.sleep(float(self.wait_time_var.get()))
                     self.take_data(scanNum,row,column,z_var,X[row,column],Y[row,0])
 
 
@@ -1201,14 +1202,14 @@ class ScanningMicroscopeGUI(tk.Tk):
             self.data[scanNum,row,column,3:9] = [dR1, dR2, R1, R2, dR1-dR2, R1-R2]
             BTT.rot_2(self.rotation_pos_1b.get(),5000)
         if z_var == "4 channel dichroism (1 fast 2 slow)":
+            
             dR1 = lockin.readx2()
             R1 = lockin.readx1()
             BTT.rot_1(self.rotation_pos_2a.get(),5000)
             time.sleep(float(self.wait_time_var.get()))
             dR2 = lockin.readx2()
             R2 = lockin.readx1()
-            BTT.rot_1(self.rotation_pos_1a.get(),5000)
-            BTT.rot_2(self.rotation_pos_2b.get(),5000)
+            BTT.rot_1_2(self.rotation_pos_1a.get(),self.rotation_pos_2b.get(),5000)
             time.sleep(float(self.wait_time_var.get()))
             dR3 = lockin.readx2()
             R3 = lockin.readx1()
@@ -1216,18 +1217,18 @@ class ScanningMicroscopeGUI(tk.Tk):
             time.sleep(float(self.wait_time_var.get()))
             dR4 = lockin.readx2()
             R4 = lockin.readx1() 
-            self.data[scanNum,row,column,3:11] = [dR1, dR2, dR3, dR4, R1, R2, R3, R4]
-            BTT.rot_1(self.rotation_pos_1a.get(),5000)
-            BTT.rot_2(self.rotation_pos_1b.get(),5000)
+            self.data[scanNum,row,column,3:12] = [dR1, dR2, dR3, dR4, R1, R2, R3, R4, dR1-dR4]
+            BTT.rot_1_2(self.rotation_pos_1a.get(),self.rotation_pos_1b.get(),5000)
+            
         if z_var == "4 channel dichroism (2 fast 1 slow)":
+            
             dR1 = lockin.readx2()
             R1 = lockin.readx1()
             BTT.rot_2(self.rotation_pos_2b.get(),5000)
             time.sleep(float(self.wait_time_var.get()))
             dR2 = lockin.readx2()
             R2 = lockin.readx1()
-            BTT.rot_2(self.rotation_pos_1b.get(),5000)
-            BTT.rot_1(self.rotation_pos_2a.get(),5000)
+            BTT.rot_1_2(self.rotation_pos_2a.get(),self.rotation_pos_1b.get(),5000)
             time.sleep(float(self.wait_time_var.get()))
             dR3 = lockin.readx2()
             R3 = lockin.readx1()
@@ -1235,9 +1236,8 @@ class ScanningMicroscopeGUI(tk.Tk):
             time.sleep(float(self.wait_time_var.get()))
             dR4 = lockin.readx2()
             R4 = lockin.readx1() 
-            self.data[scanNum,row,column,3:11] = [dR1, dR2, dR3, dR4, R1, R2, R3, R4]
-            BTT.rot_2(self.rotation_pos_1b.get(),5000)
-            BTT.rot_1(self.rotation_pos_1a.get(),5000)            
+            self.data[scanNum,row,column,3:12] = [dR1, dR2, dR3, dR4, R1, R2, R3, R4, dR1-dR4]
+            BTT.rot_1_2(self.rotation_pos_1a.get(),self.rotation_pos_1b.get(),5000)            
 
 
         self.avg_data[row,column,3] = np.mean(self.data[:scanNum+1,row,column,3])
@@ -1248,6 +1248,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.avg_data[row,column,8] = np.mean(self.data[:scanNum+1,row,column,8])
         self.avg_data[row,column,9] = np.mean(self.data[:scanNum+1,row,column,9])
         self.avg_data[row,column,10] = np.mean(self.data[:scanNum+1,row,column,10])
+        self.avg_data[row,column,11] = np.mean(self.data[:scanNum+1,row,column,11])
         
         
     def stepInd(self, x_var, x, x_2 = 0):
@@ -1429,8 +1430,17 @@ class ScanningMicroscopeGUI(tk.Tk):
             plot_data = self.avg_data
         else:
             plot_data = self.data[scanNum,:,:,:]
-        plot_1 = int(self.plot1_column.get()[0])
-        plot_2 = int(self.plot2_column.get()[0])
+        plot_1 = int(self.plot1_column.get()[0:1])
+        plot_2 = int(self.plot2_column.get()[0:1])
+        if plot_1 == 1:
+            plot_1 = 10
+        if plot_1 == 2:
+            plot_1 = 11
+            print("displaying 11")
+        if plot_2 == 1:
+            plot_2 = 10
+        if plot_2 == 2:
+            plot_2 = 11
         self.image_plot_1.set_data(plot_data[:,:,plot_1])
         self.image_plot_1.set_clim(vmin=plot_data[:,:,plot_1].min(), vmax=plot_data[:,:,plot_1].max())
         self.image_plot_2.set_data(plot_data[:,:,plot_2])
@@ -1473,7 +1483,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         print("Stopping scan...")
 
     def save_data(self):
-        data_to_save = self.data.reshape(-1,11)
+        data_to_save = self.data.reshape(-1,12)
         filename = self.save_path_var.get()+'/'+self.filename_var.get()+".txt"
         date_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         notes = self.notes_text.get("1.0", tk.END).strip()
@@ -1517,9 +1527,9 @@ class ScanningMicroscopeGUI(tk.Tk):
         if self.z_axis_var.get() == "circular dichroism (rot 2)":
             header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2    R_1     R_2      dR_diff     R_diff")  
         if self.z_axis_var.get() == "4 channel dichroism (1 fast 2 slow)":
-            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2     dR_3     dR_4     R_1     R_2    R_3     R_4") 
+            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2     dR_3     dR_4     R_1     R_2    R_3     R_4    dR1-dR4") 
         if self.z_axis_var.get() == "4 channel dichroism (2 fast 1 slow)":
-            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2     dR_3     dR_4     R_1     R_2    R_3     R_4") 
+            header_lines.append(f"# Columns: Scan_Number {self.y_axis_var.get()} {self.x_axis_var.get()} dR_1     dR_2     dR_3     dR_4     R_1     R_2    R_3     R_4    dR1-dR4") 
         header_str = "\n".join(header_lines)
         np.savetxt(filename, data_to_save, header=header_str, comments="")
         if self.save_picture_var.get():
