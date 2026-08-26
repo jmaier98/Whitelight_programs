@@ -117,6 +117,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.TG_entry_var = tk.StringVar(value="0")
         self.BG_entry_var = tk.StringVar(value="0")
         self.WP_entry_var = tk.StringVar(value="0")
+        self.WP_offset_var = tk.StringVar(value="324")
         self.POL_entry_var = tk.StringVar(value="0")
         self.YD_entry_var = tk.StringVar(value="0")
         self.CL_entry_var = tk.StringVar(value="6e-10")
@@ -434,13 +435,13 @@ class ScanningMicroscopeGUI(tk.Tk):
 
         # X axis drop-down
         ttk.Label(axes_frame, text="X Axis:").pack(anchor=tk.W)
-        x_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
+        x_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Waveplate offset", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
         x_menu = ttk.OptionMenu(axes_frame, self.x_axis_var, x_options[0], *x_options)
         x_menu.pack(fill=tk.X)
 
         # Y axis drop-down
         ttk.Label(axes_frame, text="Y Axis:").pack(anchor=tk.W)
-        y_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
+        y_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Waveplate offset", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
         y_menu = ttk.OptionMenu(axes_frame, self.y_axis_var, y_options[1], *y_options)
         y_menu.pack(fill=tk.X)
 
@@ -633,6 +634,11 @@ class ScanningMicroscopeGUI(tk.Tk):
             .grid(row=5, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.WP_entry_var)\
             .grid(row=5, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+        # Row 5b: offset (deg) between the two waveplates
+        ttk.Button(motion_frame, text="set Waveplate offset", command=self.set_WP_offset)\
+            .grid(row=105, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Entry(motion_frame, textvariable=self.WP_offset_var)\
+            .grid(row=105, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
         # Row 6: set Polarizer and its entry box
         ttk.Button(motion_frame, text="set Polarizer angle", command=self.set_POL)\
             .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
@@ -1016,7 +1022,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             moved = ESP.moveZbut2(target_pos)
     def set_WP(self):
         x = float(self.WP_entry_var.get())
-        BTT.rot_12(x,5000)
+        BTT.rot_12(x,5000,float(self.WP_offset_var.get()))
         '''xwav, ywav = waveplate_offset(x)
         new_x = self.x_target.get()+xwav
         new_y = self.y_target.get()+ywav
@@ -1024,6 +1030,9 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.stepInd("Y pos",new_y-5)
         self.stepInd("X pos",new_x)
         self.stepInd("Y pos",new_y)'''
+    def set_WP_offset(self):
+        # re-apply the current waveplate angle with the new offset
+        BTT.rot_12(float(self.WP_entry_var.get()),5000,float(self.WP_offset_var.get()))
     def set_POL(self):
         x = float(self.POL_entry_var.get())
         BTT.rot_2(x,5000)
@@ -1298,6 +1307,9 @@ class ScanningMicroscopeGUI(tk.Tk):
             print("dummy = "+str(x))
         if x_var == "Wavelength":
             spec.set_nm(x)
+        if x_var == "Waveplate offset":
+            self.WP_offset_var.set(str(x))
+            BTT.rot_12(float(self.WP_entry_var.get()),5000,x)
         if x_var == "Waveplate angle":
             '''moved = ESP.moveZ(x)
             while moved != True:
@@ -1307,7 +1319,8 @@ class ScanningMicroscopeGUI(tk.Tk):
             new_y = self.y_target.get()+((-2.19*np.sin(x -.678))-1.37)
             self.stepInd("X pos",new_x)
             self.stepInd("Y pos",new_y)'''
-            BTT.rot_12(x,5000)
+            self.WP_entry_var.set(str(x))
+            BTT.rot_12(x,5000,float(self.WP_offset_var.get()))
             '''xwav, ywav = waveplate_offset(x)
             new_x = self.x_target.get()+xwav
             new_y = self.y_target.get()+ywav
@@ -1557,6 +1570,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             f"# TG Entry: {self.TG_entry_var.get()}",
             f"# BG Entry: {self.BG_entry_var.get()}",
             f"# WP Entry: {self.WP_entry_var.get()}",
+            f"# WP Offset: {self.WP_offset_var.get()}",
             f"# YD Entry: {self.YD_entry_var.get()}",
             f"# CL Entry: {self.CL_entry_var.get()}",
             f"# Back Gate Start: {self.BGS_entry_var.get()}",

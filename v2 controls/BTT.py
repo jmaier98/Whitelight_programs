@@ -30,9 +30,12 @@ class BTT:
         travel_mm = angle_x / ROTATION_MOUNT
         self.send_gcode(3, f'G0 Y{travel_mm:.3f} F{feedrate}')
 
-    def rot_12(self, angle_x, feedrate):
+    def rot_12(self, angle_x, feedrate, offset=324.0):
+        # the two waveplates move together; offset (deg) sets their relative
+        # zero, i.e. waveplate 2 sits at (offset - angle_x). offset=324 is the
+        # old hard coded behaviour (90 mm of travel on the Y mount).
         travel_mm = angle_x / ROTATION_MOUNT
-        travel_mmy = 90-travel_mm
+        travel_mmy = (offset - angle_x) / ROTATION_MOUNT
         self.send_gcode(3, f'G0 X{travel_mm:.3f} Y{travel_mmy:.3f} F{feedrate}')
         
     def rot_1_2(self, angle_x, angle_y, feedrate):
