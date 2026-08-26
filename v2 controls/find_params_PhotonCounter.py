@@ -28,8 +28,8 @@ def main():
     # In your case the laser trigger is at 100 kHz (period ~10 µs),
     # so we scan the delay from 0 to 10 µs.
     integration_time = 2  # count for 1 second at each setting
-    num_points = 50    # number of delay points to sample
-    start_delay = 3.2e-7     # seconds
+    num_points = 25    # number of delay points to sample
+    start_delay = 3e-7     # seconds
     stop_delay = 3.4e-7    # 10 microseconds
     
     delay_values = np.linspace(start_delay, stop_delay, num_points)

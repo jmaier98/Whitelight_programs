@@ -27,7 +27,28 @@ lockin.open_all_connections()
 # Use the 'TkAgg' backend for matplotlib.
 matplotlib.use("TkAgg")
 
+A_x, phi_x, C_x = -2.222236000765968, 0.5022380193927819, 1.47640082833268
+A_y, phi_y, C_y =  2.057051503756052, 1.9955961682292787, -1.782731830285951
 
+def waveplate_offset(angle_deg):
+    """
+    Given a waveplate angle in degrees, return the x and y position offsets
+    re-zeroed so that both xoff(0) = 0 and yoff(0) = 0.
+    """
+    theta = np.deg2rad(angle_deg)
+    
+    # Original offsets
+    xoffwav = A_x * np.sin(theta + phi_x) + C_x
+    yoffwav = A_y * np.sin(theta + phi_y) + C_y
+    
+    # Subtract offsets at 0° to re-zero
+    xoff0wav = A_x * np.sin(phi_x) + C_x
+    yoff0wav = A_y * np.sin(phi_y) + C_y
+    
+    xoffwav -= xoff0wav
+    yoffwav -= yoff0wav
+    
+    return xoffwav, yoffwav
 
 class ScanningMicroscopeGUI(tk.Tk):
     def __init__(self):
@@ -69,7 +90,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         # --- Other scanning parameters ---
         self.averages_var   = tk.StringVar(value="1")
         self.wait_time_var  = tk.StringVar(value="0.5")
-        self.time_zero_pos = tk.DoubleVar(value = 9.575)
+        self.time_zero_pos = tk.DoubleVar(value = 31.6)
 
         # --- Metadata ---
         self.device_var           = tk.StringVar(value="Device1")
@@ -96,6 +117,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.TG_entry_var = tk.StringVar(value="0")
         self.BG_entry_var = tk.StringVar(value="0")
         self.WP_entry_var = tk.StringVar(value="0")
+        self.POL_entry_var = tk.StringVar(value="0")
         self.YD_entry_var = tk.StringVar(value="0")
         self.CL_entry_var = tk.StringVar(value="6e-10")
         self.BGS_entry_var = tk.StringVar(value="0")
@@ -437,6 +459,7 @@ class ScanningMicroscopeGUI(tk.Tk):
             "lockin 3",
             "Photocurrent and R",
             "Record offsets",
+            "LCP RCP SHG",
             "random"
         ]
         z_menu = ttk.OptionMenu(axes_frame, self.z_axis_var, z_options[0], *z_options)
@@ -599,17 +622,22 @@ class ScanningMicroscopeGUI(tk.Tk):
         ttk.Entry(motion_frame, textvariable=self.TG_entry_var)\
             .grid(row=4, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
 
-        # Row 5: set BG voltage and its entry box
+        '''# Row 5: set BG voltage and its entry box
         ttk.Button(motion_frame, text="set BG voltage", command=self.set_BG)\
             .grid(row=5, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.BG_entry_var)\
-            .grid(row=5, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+            .grid(row=5, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
-        ''' Row 6: set Waveplate and its entry box
-        ttk.Button(motion_frame, text="set Waveplate anngle", command=self.set_WP)\
-            .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
+        # Row 5: set Waveplate and its entry box
+        ttk.Button(motion_frame, text="set Waveplate angle", command=self.set_WP)\
+            .grid(row=5, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.WP_entry_var)\
-            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
+            .grid(row=5, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+        # Row 6: set Polarizer and its entry box
+        ttk.Button(motion_frame, text="set Polarizer angle", command=self.set_POL)\
+            .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
+        ttk.Entry(motion_frame, textvariable=self.POL_entry_var)\
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
 
         '''# Row 7: set Reverse DT Yaxis and its entry box
         ttk.Button(motion_frame, text="set Yaxis Delay", command=self.set_YD)\
@@ -617,11 +645,11 @@ class ScanningMicroscopeGUI(tk.Tk):
         ttk.Entry(motion_frame, textvariable=self.YD_entry_var)\
             .grid(row=7, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
-        # Row 6: set gate current limit
+        '''# Row 6: set gate current limit
         ttk.Button(motion_frame, text="set Current Limit", command=self.set_CL)\
             .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.CL_entry_var)\
-            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
         # Row 7: set BG start and end for line gate cut
         ttk.Label(motion_frame, text="Cut BG start : end")\
@@ -988,10 +1016,17 @@ class ScanningMicroscopeGUI(tk.Tk):
             moved = ESP.moveZbut2(target_pos)
     def set_WP(self):
         x = float(self.WP_entry_var.get())
-        moved = ESP.moveZ(x)
-        while moved != True:
-            time.sleep(2)
-            moved = ESP.moveZ(x)
+        BTT.rot_12(x,5000)
+        '''xwav, ywav = waveplate_offset(x)
+        new_x = self.x_target.get()+xwav
+        new_y = self.y_target.get()+ywav
+        self.stepInd("X pos",new_x-5)
+        self.stepInd("Y pos",new_y-5)
+        self.stepInd("X pos",new_x)
+        self.stepInd("Y pos",new_y)'''
+    def set_POL(self):
+        x = float(self.POL_entry_var.get())
+        BTT.rot_2(x,5000)
     def set_CL(self):
         x = float(self.CL_entry_var.get())
         self.currlimit = x
@@ -1238,7 +1273,14 @@ class ScanningMicroscopeGUI(tk.Tk):
             R4 = lockin.readx1() 
             self.data[scanNum,row,column,3:12] = [dR1, dR2, dR3, dR4, R1, R2, R3, R4, dR1-dR4]
             BTT.rot_1_2(self.rotation_pos_1a.get(),self.rotation_pos_1b.get(),5000)            
-
+        if z_var == "LCP RCP SHG":
+            LCP = counts = sr400.acquire()
+            BTT.rot_1(212,5000)
+            time.sleep(float(self.wait_time_var.get()))
+            RCP = counts = sr400.acquire()
+            BTT.rot_1(167,5000)
+            norm = (LCP-RCP)/(LCP+RCP)
+            self.data[scanNum,row,column,3:7] = [LCP, RCP, LCP-RCP,norm]
 
         self.avg_data[row,column,3] = np.mean(self.data[:scanNum+1,row,column,3])
         self.avg_data[row,column,4] = np.mean(self.data[:scanNum+1,row,column,4])
@@ -1257,14 +1299,22 @@ class ScanningMicroscopeGUI(tk.Tk):
         if x_var == "Wavelength":
             spec.set_nm(x)
         if x_var == "Waveplate angle":
-            moved = ESP.moveZ(x)
+            '''moved = ESP.moveZ(x)
             while moved != True:
                 time.sleep(2)
                 moved = ESP.moveZ(x)
             new_x = self.x_target.get()+((2.25*np.sin(x + .925))-1.8)
             new_y = self.y_target.get()+((-2.19*np.sin(x -.678))-1.37)
             self.stepInd("X pos",new_x)
-            self.stepInd("Y pos",new_y)
+            self.stepInd("Y pos",new_y)'''
+            BTT.rot_12(x,5000)
+            '''xwav, ywav = waveplate_offset(x)
+            new_x = self.x_target.get()+xwav
+            new_y = self.y_target.get()+ywav
+            self.stepInd("X pos",new_x-5)
+            self.stepInd("Y pos",new_y-5)
+            self.stepInd("X pos",new_x)
+            self.stepInd("Y pos",new_y)'''
         if x_var == "Delay time (ps)":
             target_pos = self.time_zero_pos.get() + x*-.15
             if target_pos < -105:

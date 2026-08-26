@@ -21,7 +21,7 @@ class SR400:
         gate_width = 10e-9  # seconds
         self.inst.write(f"GW 0,{gate_width}")
         time.sleep(0.1)
-        delay = 3.23e-7
+        delay = 3.22e-7
         self.inst.write(f"GD 0,{delay}")
         time.sleep(0.05)
         nacquisition = 1e7*acquisition_time
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     #sr400.set_acquisition_time(1.0)
     sr400.set_gate(1)
     # Set discriminator level to 0.05 V on channel A.
-    sr400.set_discriminator(-0.005, channel=0)
+    sr400.set_discriminator(-0.003, channel=0)
     
     # Execute an acquisition and print the result.
     counts = sr400.acquire()

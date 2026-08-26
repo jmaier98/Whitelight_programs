@@ -8,7 +8,7 @@ class Spectrometer:
     Python driver for the spectrometer over RS-232.
     Provides methods to get the nm reading, set nm/min, and set nm.
     """
-    def __init__(self, port="COM6", baudrate=9600, timeout=1):
+    def __init__(self, port="COM5", baudrate=9600, timeout=1):
         """
         Initialize the serial connection to the spectrometer.
         """
@@ -148,16 +148,16 @@ class Spectrometer:
 
 # Example usage:
 if __name__ == "__main__":
-    spec = Spectrometer(port="COM6", baudrate=9600, timeout=1)
+    spec = Spectrometer(port="COM5", baudrate=9600, timeout=1)
     
     nm_value = spec.get_nm()
     print(f"Current nm: {nm_value}")
-    #spec.switch_grating(3)
-    #time.sleep(5)
+    spec.switch_grating(3)
+    time.sleep(10)
     spec.print_selected_grating()
     spec.print_installed_gratings()
-    #spec.set_nm_min(5000)
-    #spec.set_nm(0)
+    spec.set_nm_min(5000)
+    spec.set_nm(515)
     
     spec.close()
 

@@ -3,7 +3,7 @@ import serial
 import time
 import re
 
-com_port = 'COM6'
+com_port = 'COM5'
 baud_rate = 9600
 serial_lock = threading.Lock()
 
@@ -53,7 +53,7 @@ def set_nm(x):
 if __name__ == "__main__":
     print(get_nm())
     set_nm_min(5000)
-    set_nm(0)
+    set_nm(1030)
 
 
 

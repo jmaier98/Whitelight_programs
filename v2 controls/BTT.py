@@ -29,6 +29,11 @@ class BTT:
     def rot_2(self, angle_x, feedrate):
         travel_mm = angle_x / ROTATION_MOUNT
         self.send_gcode(3, f'G0 Y{travel_mm:.3f} F{feedrate}')
+
+    def rot_12(self, angle_x, feedrate):
+        travel_mm = angle_x / ROTATION_MOUNT
+        travel_mmy = 90-travel_mm
+        self.send_gcode(3, f'G0 X{travel_mm:.3f} Y{travel_mmy:.3f} F{feedrate}')
         
     def rot_1_2(self, angle_x, angle_y, feedrate):
         travel_mmx = angle_x / ROTATION_MOUNT

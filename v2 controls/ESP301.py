@@ -1,6 +1,7 @@
 import serial
 import time
 
+print("serial module file:", serial.__file__)
 class ESP301:
     """
     Python driver for Newport ESP301 Motion Controller over RS-232.
