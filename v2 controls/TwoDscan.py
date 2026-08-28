@@ -435,13 +435,13 @@ class ScanningMicroscopeGUI(tk.Tk):
 
         # X axis drop-down
         ttk.Label(axes_frame, text="X Axis:").pack(anchor=tk.W)
-        x_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Waveplate offset", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
+        x_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Waveplate offset", "Rot 1", "Rot 2", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
         x_menu = ttk.OptionMenu(axes_frame, self.x_axis_var, x_options[0], *x_options)
         x_menu.pack(fill=tk.X)
 
         # Y axis drop-down
         ttk.Label(axes_frame, text="Y Axis:").pack(anchor=tk.W)
-        y_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Waveplate offset", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
+        y_options = ["X pos", "Y pos", "Z pos", "Delay pos", "Delay time (ps)", "Waveplate angle", "Waveplate offset", "Rot 1", "Rot 2", "Wavelength", "Top gate", "Back gate", "Gate line cut (set TG)", "dummy", "Reverse delay time (ps)", "Delay time (ps)_yaxis", "Reverse Delay time (ps)_yaxis"]
         y_menu = ttk.OptionMenu(axes_frame, self.y_axis_var, y_options[1], *y_options)
         y_menu.pack(fill=tk.X)
 
@@ -1307,6 +1307,10 @@ class ScanningMicroscopeGUI(tk.Tk):
             print("dummy = "+str(x))
         if x_var == "Wavelength":
             spec.set_nm(x)
+        if x_var == "Rot 1":
+            BTT.rot_1(x,5000)
+        if x_var == "Rot 2":
+            BTT.rot_2(x,5000)
         if x_var == "Waveplate offset":
             self.WP_offset_var.set(str(x))
             BTT.rot_12(float(self.WP_entry_var.get()),5000,x)
