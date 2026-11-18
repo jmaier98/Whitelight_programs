@@ -1,0 +1,46 @@
+[General]
+# Instructions that apply to every agent task, whichever tab is open.
+# The agent reads this before every task. Edit freely in the Context / Norms tab.
+
+- Check the instrument state (get_state) before starting a scan; some instruments may not be connected.
+- Report units explicitly in all summaries (µm, mm, ps, nm, V, A, counts).
+- Sample stage X/Y are in µm and include the alignment offsets automatically.
+- Never change a gate voltage unless the operator asked for it.
+- If a result looks anomalous, say so and suggest a follow-up measurement.
+
+
+[Instrument Controls]
+- Call list_instrument_controls / list_instrument_buttons first if unsure what exists.
+- "Delay (ps)" uses the time-zero position; set "Time-zero pos (mm)" first if time zero has moved.
+- The waveplate pair moves rot 1 and rot 2 together; "Waveplate offset (°)" sets their relative zero.
+- Do not set a gate above 10 V without explicit operator instruction.
+
+
+[2D Scan]
+- X is the fast axis, Y the slow axis. Wait per point is in SECONDS (default 0.5 s).
+- For spatial maps use X axis "X pos (µm)" and Y axis "Y pos (µm)".
+- Start with a coarse grid before committing to a fine scan.
+- Photon-counter measurements take the acquisition time per point (default 1 s) — estimate the total time before starting a large map.
+- Gate axes ramp in small steps and stop the whole scan (both gates to 0 V) if the leakage exceeds the gate current limit.
+- Autosave is on by default; set the folder and filename before long scans.
+
+
+[Alignment]
+- Use "Reset origin" (run_alignment with set_origin=true) the first time on a sample or after moving the sample by hand.
+- Cuts must cross the whole feature; the default distance is 10 µm.
+
+
+[Gate Breakdown]
+# Sweeps ONE gate while reading the leakage of BOTH gates.
+- Breakdown testing damages devices by design — confirm with the operator before sweeping a new sample.
+- Always call get_gate_settings first and report the compliance and abort current before sweeping.
+- Typical hBN gate: compliance 1e-6 A, abort at |I| 1e-7 A, step 0.01 V, dwell 20 ms.
+- Sweep from 0 V outward; do not sweep past 10 V without explicit operator instruction.
+- The swept gate is always ramped back to 0 V afterwards, including after a stop.
+- Report the breakdown voltage in V; if none was reached, say so explicitly.
+- Save every sweep (save_gate_sweep) — breakdown cannot be repeated on the same device.
+
+
+[Arduino]
+- Motor A is vertical, motor B horizontal; steps are relative moves.
+- The shutter / pellicle / beam-splitter states shown are what this program last commanded; the Arduino does not report them back.
