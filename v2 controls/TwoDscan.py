@@ -90,7 +90,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         # --- Other scanning parameters ---
         self.averages_var   = tk.StringVar(value="1")
         self.wait_time_var  = tk.StringVar(value="0.5")
-        self.time_zero_pos = tk.DoubleVar(value = 31.6)
+        self.time_zero_pos = tk.DoubleVar(value = -57.2)
 
         # --- Metadata ---
         self.device_var           = tk.StringVar(value="Device1")
@@ -117,7 +117,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         self.TG_entry_var = tk.StringVar(value="0")
         self.BG_entry_var = tk.StringVar(value="0")
         self.WP_entry_var = tk.StringVar(value="0")
-        self.WP_offset_var = tk.StringVar(value="324")
+        self.WP_offset_var = tk.StringVar(value="0")
         self.POL_entry_var = tk.StringVar(value="0")
         self.YD_entry_var = tk.StringVar(value="0")
         self.CL_entry_var = tk.StringVar(value="6e-10")
@@ -450,6 +450,7 @@ class ScanningMicroscopeGUI(tk.Tk):
         z_options = [
             "Photon counter",
             "deltaR/R",
+            "counts and dR/R",
             "deltaR/R alternate",
             "circular dichroism (rot 1)",
             "circular dichroism (rot 2)",
@@ -636,14 +637,14 @@ class ScanningMicroscopeGUI(tk.Tk):
             .grid(row=5, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
         # Row 5b: offset (deg) between the two waveplates
         ttk.Button(motion_frame, text="set Waveplate offset", command=self.set_WP_offset)\
-            .grid(row=105, column=0, padx=5, pady=5, sticky="ew")
+            .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.WP_offset_var)\
-            .grid(row=105, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
-        # Row 6: set Polarizer and its entry box
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+        '''# Row 6: set Polarizer and its entry box
         ttk.Button(motion_frame, text="set Polarizer angle", command=self.set_POL)\
             .grid(row=6, column=0, padx=5, pady=5, sticky="ew")
         ttk.Entry(motion_frame, textvariable=self.POL_entry_var)\
-            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)
+            .grid(row=6, column=1, padx=5, pady=5, sticky="ew", columnspan=2)'''
 
         '''# Row 7: set Reverse DT Yaxis and its entry box
         ttk.Button(motion_frame, text="set Yaxis Delay", command=self.set_YD)\
@@ -1209,6 +1210,15 @@ class ScanningMicroscopeGUI(tk.Tk):
         if z_var == "Photon counter":
             counts = sr400.acquire()
             self.data[scanNum,row,column,3:6] = [counts,counts,counts]
+        if z_var == "counts and dR/R":
+            counts = sr400.acquire()
+            dr = lockin.readx2()
+            r = lockin.readx1()
+            if r == 0:
+                r = 1e-9
+            if dr == 0:
+                dr = 1e-9
+            self.data[scanNum,row,column,3:8] = [dr,r,dr/r,r/dr,counts]
         if z_var == "Photocurrent and R":
             I_plus = lockin.readx2()
             I_minus = lockin.readx1()
